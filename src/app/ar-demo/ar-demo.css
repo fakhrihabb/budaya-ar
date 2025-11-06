@@ -1,0 +1,325 @@
+/* AR Demo Styles */
+
+.ar-demo-container {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+/* Base Screen Styling */
+.screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Loading Screen */
+.loading-screen {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.screen-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  color: white;
+  text-align: center;
+}
+
+.loading-screen h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Spinner Animation */
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  width: 200px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: white;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.9rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Instructions Screen */
+.instructions-screen {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.instructions-screen h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: white;
+  margin: 0 0 2rem 0;
+}
+
+.instructions-box {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  color: white;
+  margin-bottom: 2rem;
+  min-width: 300px;
+}
+
+.instructions-box p {
+  font-size: 1.1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+/* Buttons */
+.btn-primary {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-back {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* AR Content */
+.ar-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.ar-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Scanning Screen */
+.scanning-screen {
+  background: #000;
+  flex-direction: column;
+}
+
+.scanning-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  pointer-events: none;
+}
+
+/* Reticle - a glowing circle */
+.reticle {
+  width: 80px;
+  height: 80px;
+  border: 3px solid #00ff88;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #00ff88, inset 0 0 20px rgba(0, 255, 136, 0.3);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px #00ff88, inset 0 0 20px rgba(0, 255, 136, 0.3);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px #00ff88, inset 0 0 30px rgba(0, 255, 136, 0.5);
+  }
+}
+
+.scanning-text {
+  color: white;
+  font-size: 1.2rem;
+  margin: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.scanning-hint {
+  color: #00ff88;
+  font-size: 0.9rem;
+  margin: 0;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.back-button-container {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 100;
+}
+
+/* Playing Scene Screen */
+.playing-screen {
+  background: #000;
+}
+
+.scene-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 2rem 1rem 1rem;
+  pointer-events: none;
+}
+
+.subtitles-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subtitle {
+  color: white;
+  font-size: 1.1rem;
+  text-align: center;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Finished Screen */
+.finished-screen {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.finished-screen h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: white;
+  margin: 0 0 1rem 0;
+}
+
+.finished-message {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+  margin: 0 0 2rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .loading-screen h1,
+  .instructions-screen h1,
+  .finished-screen h1 {
+    font-size: 1.8rem;
+  }
+
+  .instructions-box {
+    min-width: auto;
+    width: 90%;
+    padding: 1.5rem;
+  }
+
+  .instructions-box p {
+    font-size: 1rem;
+  }
+
+  .btn-primary {
+    padding: 10px 24px;
+    font-size: 1rem;
+  }
+}
