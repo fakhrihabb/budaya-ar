@@ -26,6 +26,23 @@ export default function ARDemo() {
   const modelsRef = useRef([]);
   const xrFrameLoopRef = useRef(null);
 
+  // Define event handlers BEFORE useEffect
+  const handleAudioEnded = () => {
+    if (sceneManagerRef.current) {
+      sceneManagerRef.current.onAudioEnded();
+    }
+  };
+
+  const handleAudioTimeUpdate = () => {
+    if (audioRef.current && subtitlesRef.current) {
+      const currentTime = audioRef.current.currentTime;
+      const subtitle = subtitlesRef.current.find(
+        (sub) => currentTime >= sub.start && currentTime <= sub.end
+      );
+      setCurrentSubtitle(subtitle ? subtitle.text : '');
+    }
+  };
+
   useEffect(() => {
     // Check WebXR support
     if (!navigator.xr) {
@@ -34,10 +51,28 @@ export default function ARDemo() {
       return;
     }
 
+    // Check if running on localhost (development)
+    const isLocalhost = typeof window !== 'undefined' && 
+                       (window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1');
+
+    // Try to check immersive-ar support
     navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-      setArSupported(supported);
-      if (!supported) {
-        console.warn('immersive-ar is not supported');
+      // On localhost, we might get false even if WebXR is available
+      // So we'll show the button on localhost for testing
+      const shouldSupport = supported || isLocalhost;
+      setArSupported(shouldSupport);
+      
+      if (!supported && !isLocalhost) {
+        console.warn('immersive-ar is not supported on this device');
+      } else if (isLocalhost) {
+        console.info('Running on localhost - enabling AR demo for testing');
+      }
+    }).catch((err) => {
+      console.warn('Error checking immersive-ar support:', err);
+      // Allow on localhost even if check fails
+      if (isLocalhost) {
+        setArSupported(true);
       }
     });
 
@@ -85,33 +120,63 @@ export default function ARDemo() {
     };
   }, []);
 
-  const handleAudioEnded = () => {
+  const simulateARSession = () => {
+    // Simulate AR session on localhost for testing
+    // Transition through states to test the flow
     if (sceneManagerRef.current) {
-      sceneManagerRef.current.onAudioEnded();
-    }
-  };
+      sceneManagerRef.current.onStartARClick();
+      
+      // Simulate finding a surface after 2 seconds
+      setTimeout(() => {
+        sceneManagerRef.current.setState('PLAYING_SCENE');
+      }, 2000);
 
-  const handleAudioTimeUpdate = () => {
-    if (audioRef.current && subtitlesRef.current) {
-      const currentTime = audioRef.current.currentTime;
-      const subtitle = subtitlesRef.current.find(
-        (sub) => currentTime >= sub.start && currentTime <= sub.end
-      );
-      setCurrentSubtitle(subtitle ? subtitle.text : '');
+      // Start test audio
+      if (audioRef.current) {
+        audioRef.current.play().catch(err => {
+          console.warn('Could not auto-play audio on localhost:', err);
+        });
+      }
     }
   };
 
   const handleStartAR = async () => {
+    // Check if on localhost (development)
+    const isLocalhost = typeof window !== 'undefined' && 
+                       (window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1');
+    
+    if (isLocalhost) {
+      console.log('Running on localhost - enabling AR demo for testing (simulated)');
+      // For localhost, we'll simulate the AR session without actual WebXR
+      // This allows testing the UI and flow
+      simulateARSession();
+      return;
+    }
+
     if (!navigator.xr) {
       alert('WebXR is not supported on your device');
       return;
     }
 
     try {
-      const session = await navigator.xr.requestSession('immersive-ar', {
+      // Start with minimal required features only
+      const sessionInit = {
         requiredFeatures: ['hit-test'],
         optionalFeatures: ['dom-overlay', 'dom-overlay-for-handheld-ar'],
-      });
+      };
+
+      let session;
+      try {
+        // Try with optional dom-overlay first
+        session = await navigator.xr.requestSession('immersive-ar', sessionInit);
+      } catch (domOverlayErr) {
+        console.warn('DOM overlay not supported, trying without it:', domOverlayErr.message);
+        // Fallback: Try without dom-overlay features
+        session = await navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['hit-test'],
+        });
+      }
 
       xrSessionRef.current = session;
 
@@ -138,7 +203,12 @@ export default function ARDemo() {
       session.requestAnimationFrame(onXRFrame);
     } catch (err) {
       console.error('Failed to start AR session:', err);
-      alert('Failed to start AR session. ' + err.message);
+      console.error('Error details:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+      });
+      alert('Failed to start AR session.\n\n' + err.message + '\n\nMake sure:\n- Device supports AR\n- Camera permissions granted\n- Using HTTPS on Vercel');
     }
   };
 
