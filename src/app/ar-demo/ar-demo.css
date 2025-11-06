@@ -5,6 +5,17 @@
   height: 100vh;
   overflow: hidden;
   background: #000;
+  position: relative;
+}
+
+/* AR Canvas */
+.ar-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* Base Screen Styling */
@@ -130,13 +141,18 @@
   transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
-.btn-primary:active {
+.btn-primary:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-back {
@@ -155,27 +171,9 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* AR Content */
-.ar-content {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.ar-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* Scanning Screen */
-.scanning-screen {
-  background: #000;
-  flex-direction: column;
-}
-
+/* Scanning Overlay */
 .scanning-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -186,28 +184,7 @@
   justify-content: center;
   gap: 2rem;
   pointer-events: none;
-}
-
-/* Reticle - a glowing circle */
-.reticle {
-  width: 80px;
-  height: 80px;
-  border: 3px solid #00ff88;
-  border-radius: 50%;
-  box-shadow: 0 0 20px #00ff88, inset 0 0 20px rgba(0, 255, 136, 0.3);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 20px #00ff88, inset 0 0 20px rgba(0, 255, 136, 0.3);
-  }
-  50% {
-    transform: scale(1.1);
-    box-shadow: 0 0 30px #00ff88, inset 0 0 30px rgba(0, 255, 136, 0.5);
-  }
+  z-index: 5;
 }
 
 .scanning-text {
@@ -235,25 +212,23 @@
 }
 
 .back-button-container {
-  position: absolute;
+  position: fixed;
   bottom: 2rem;
   right: 2rem;
   z-index: 100;
+  pointer-events: auto;
 }
 
-/* Playing Scene Screen */
-.playing-screen {
-  background: #000;
-}
-
+/* Scene Overlay */
 .scene-overlay {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
   padding: 2rem 1rem 1rem;
   pointer-events: none;
+  z-index: 5;
 }
 
 .subtitles-container {
@@ -269,6 +244,7 @@
   margin: 0;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   animation: fadeInUp 0.5s ease;
+  min-height: 2rem;
 }
 
 @keyframes fadeInUp {
@@ -320,6 +296,14 @@
 
   .btn-primary {
     padding: 10px 24px;
+    font-size: 1rem;
+  }
+
+  .scanning-text {
+    font-size: 1rem;
+  }
+
+  .subtitle {
     font-size: 1rem;
   }
 }

@@ -1,0 +1,19 @@
+{
+  "subtitles": [
+    {
+      "text": "Welcome to the AR experience",
+      "start": 0,
+      "end": 3
+    },
+    {
+      "text": "This is a 3D scene placed on your surface",
+      "start": 3,
+      "end": 6
+    },
+    {
+      "text": "Enjoy this interactive story",
+      "start": 6,
+      "end": 9
+    }
+  ]
+}
