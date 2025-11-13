@@ -1,244 +1,535 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Script from 'next/script';
 
 export default function ARPage() {
   const [currentScene, setCurrentScene] = useState(0);
   const [autoPlay, setAutoPlay] = useState(false);
-  const [scriptIndex, setScriptIndex] = useState(0);
-  const modelViewerRef = useRef(null);
+  const [isInAR, setIsInAR] = useState(false);
+  const [arSupported, setArSupported] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('Initializing...');
 
-  // Sample scenes with models and scripts
+  const canvasRef = useRef(null);
+  const sceneRef = useRef(null);
+  const rendererRef = useRef(null);
+  const cameraRef = useRef(null);
+  const reticleRef = useRef(null);
+  const hitTestSourceRef = useRef(null);
+  const currentModelRef = useRef(null);
+  const xrSessionRef = useRef(null);
+  const placedModelRef = useRef(null);
+
   const scenes = [
     {
       model: '/models/cartoon_crocodile_croco-roco.glb',
-      script: [
-        'In ancient Indonesian waters,',
-        'crocodiles were revered as sacred creatures.'
-      ]
+      script: 'In ancient Indonesian waters, crocodiles were revered as sacred creatures.',
+      scale: 0.3
     },
     {
       model: '/models/banana.glb',
-      script: [
-        'Bananas have been cultivated in Indonesia',
-        'for thousands of years as a staple food.'
-      ]
+      script: 'Bananas have been cultivated in Indonesia for thousands of years as a staple food.',
+      scale: 0.5
     }
   ];
 
-  // Auto-play scenes
+  // Check WebXR support
   useEffect(() => {
-    if (!autoPlay) return;
+    const checkSupport = async () => {
+      setStatusMessage('Checking WebXR support...');
 
-    const timer = setInterval(() => {
-      setCurrentScene((prev) => {
-        const next = prev + 1;
-        if (next >= scenes.length) {
-          setAutoPlay(false);
-          return prev;
-        }
-        return next;
-      });
-    }, 10000);
+      if (!navigator.xr) {
+        setStatusMessage('WebXR not available. Please use Chrome or Edge.');
+        setArSupported(false);
+        return;
+      }
 
-    return () => clearInterval(timer);
-  }, [autoPlay, scenes.length]);
+      try {
+        const supported = await navigator.xr.isSessionSupported('immersive-ar');
+        setArSupported(supported);
+        setStatusMessage(supported ? 'WebXR AR supported!' : 'WebXR AR not supported on this device');
+        console.log('WebXR AR supported:', supported);
+      } catch (e) {
+        console.error('Error checking support:', e);
+        setArSupported(false);
+        setStatusMessage('Error checking WebXR support');
+      }
+    };
 
-  // Animate script lines
+    checkSupport();
+  }, []);
+
+  // Initialize Three.js
   useEffect(() => {
-    setScriptIndex(0);
-    const timer = setInterval(() => {
-      setScriptIndex((prev) => {
-        if (prev < scenes[currentScene].script.length - 1) {
-          return prev + 1;
+    if (typeof window === 'undefined') return;
+
+    const init = async () => {
+      try {
+        setStatusMessage('Loading Three.js...');
+        const THREE = await import('three');
+        const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+
+        // Create scene
+        const scene = new THREE.Scene();
+
+        // Create camera
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+        // Create renderer with optimized settings for mobile
+        const renderer = new THREE.WebGLRenderer({
+          canvas: canvasRef.current,
+          alpha: true,
+          antialias: true,
+          powerPreference: "high-performance"
+        });
+
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for performance
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+
+        // Add lighting
+        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbbb, 1);
+        light.position.set(0.5, 1, 0.25);
+        scene.add(light);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0, 1, 0);
+        scene.add(directionalLight);
+
+        // Create reticle
+        const reticleGeometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2);
+        const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
+        reticle.matrixAutoUpdate = false;
+        reticle.visible = false;
+        scene.add(reticle);
+
+        sceneRef.current = scene;
+        cameraRef.current = camera;
+        rendererRef.current = renderer;
+        reticleRef.current = reticle;
+
+        // Animation loop
+        function animate(timestamp, frame) {
+          if (frame && xrSessionRef.current) {
+            const referenceSpace = renderer.xr.getReferenceSpace();
+
+            // Hit test
+            if (hitTestSourceRef.current) {
+              const hitTestResults = frame.getHitTestResults(hitTestSourceRef.current);
+              if (hitTestResults.length > 0) {
+                const hit = hitTestResults[0];
+                const pose = hit.getPose(referenceSpace);
+                reticle.visible = true;
+                reticle.matrix.fromArray(pose.transform.matrix);
+              } else {
+                reticle.visible = false;
+              }
+            }
+
+            // Auto-rotate placed model
+            if (placedModelRef.current) {
+              placedModelRef.current.rotation.y += 0.01;
+            }
+          }
+
+          renderer.render(scene, camera);
         }
-        return prev;
+
+        renderer.setAnimationLoop(animate);
+
+        setIsReady(true);
+        setStatusMessage('Ready! Tap "Start AR" button');
+        console.log('Three.js initialized successfully');
+
+      } catch (error) {
+        console.error('Error initializing Three.js:', error);
+        setStatusMessage('Error initializing 3D engine');
+      }
+    };
+
+    init();
+
+    return () => {
+      if (rendererRef.current) {
+        rendererRef.current.setAnimationLoop(null);
+      }
+    };
+  }, []);
+
+  // Load model
+  const loadModel = async (sceneIndex) => {
+    const THREE = await import('three');
+    const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+
+    const loader = new GLTFLoader();
+    const modelUrl = window.location.origin + scenes[sceneIndex].model;
+
+    return new Promise((resolve, reject) => {
+      loader.load(
+        modelUrl,
+        (gltf) => {
+          const model = gltf.scene;
+          model.scale.set(scenes[sceneIndex].scale, scenes[sceneIndex].scale, scenes[sceneIndex].scale);
+          currentModelRef.current = model;
+          console.log('Model loaded:', modelUrl);
+          resolve(model);
+        },
+        undefined,
+        (error) => {
+          console.error('Error loading model:', error);
+          reject(error);
+        }
+      );
+    });
+  };
+
+  // Place model on tap
+  const placeModel = () => {
+    if (!reticleRef.current || !reticleRef.current.visible || !currentModelRef.current) return;
+
+    console.log('Placing model');
+
+    // Remove previous model
+    if (placedModelRef.current) {
+      sceneRef.current.remove(placedModelRef.current);
+    }
+
+    // Clone and place new model
+    const model = currentModelRef.current.clone();
+    model.position.setFromMatrixPosition(reticleRef.current.matrix);
+    sceneRef.current.add(model);
+    placedModelRef.current = model;
+
+    // Auto-switch if enabled
+    if (autoPlay && currentScene < scenes.length - 1) {
+      setTimeout(() => {
+        nextScene();
+      }, 5000); // 5 seconds per scene
+    }
+  };
+
+  // Start AR session
+  const startAR = async () => {
+    if (!isReady || !rendererRef.current) {
+      alert('System not ready. Please wait...');
+      return;
+    }
+
+    if (!arSupported) {
+      alert('WebXR AR tidak didukung di device ini.\n\nPastikan:\n- Menggunakan Chrome atau Edge\n- Device support ARCore\n- Akses via HTTPS');
+      return;
+    }
+
+    try {
+      console.log('Starting AR session...');
+      setStatusMessage('Starting AR...');
+
+      const overlayElement = document.getElementById('ar-overlay');
+
+      // Request AR session
+      const session = await navigator.xr.requestSession('immersive-ar', {
+        requiredFeatures: ['hit-test'],
+        optionalFeatures: ['dom-overlay'],
+        domOverlay: overlayElement ? { root: overlayElement } : undefined
       });
-    }, 3000);
 
-    return () => clearInterval(timer);
-  }, [currentScene, scenes]);
+      console.log('AR session created');
+      xrSessionRef.current = session;
 
-  const nextScene = () => {
-    setAutoPlay(false);
+      await rendererRef.current.xr.setSession(session);
+      setIsInAR(true);
+      setStatusMessage('AR Active');
+
+      // Set up hit test
+      const referenceSpace = await session.requestReferenceSpace('viewer');
+      hitTestSourceRef.current = await session.requestHitTestSource({ space: referenceSpace });
+
+      // Load initial model
+      await loadModel(currentScene);
+
+      // Handle tap to place
+      const controller = rendererRef.current.xr.getController(0);
+      controller.addEventListener('select', placeModel);
+      sceneRef.current.add(controller);
+
+      // Handle session end
+      session.addEventListener('end', () => {
+        console.log('AR session ended');
+        setIsInAR(false);
+        setStatusMessage('AR ended');
+        hitTestSourceRef.current = null;
+        xrSessionRef.current = null;
+        placedModelRef.current = null;
+      });
+
+    } catch (error) {
+      console.error('AR Error:', error);
+
+      let errorMsg = 'Error: ' + error.message;
+
+      if (error.name === 'NotSupportedError') {
+        errorMsg = '❌ WebXR tidak didukung.\n\nCoba:\n1. Update Chrome ke versi terbaru\n2. Pastikan device support ARCore\n3. Restart browser';
+      } else if (error.name === 'NotAllowedError') {
+        errorMsg = '❌ Permission ditolak.\n\nAllow camera permission dan coba lagi.';
+      } else if (error.name === 'SecurityError') {
+        errorMsg = '❌ Security error.\n\nHarus diakses via HTTPS (bukan HTTP).';
+      }
+
+      alert(errorMsg);
+      setStatusMessage('Error: ' + error.name);
+    }
+  };
+
+  const nextScene = async () => {
     if (currentScene < scenes.length - 1) {
-      setCurrentScene(prev => prev + 1);
+      const newScene = currentScene + 1;
+      setCurrentScene(newScene);
+      if (isInAR) {
+        await loadModel(newScene);
+      }
     }
   };
 
-  const prevScene = () => {
-    setAutoPlay(false);
+  const prevScene = async () => {
     if (currentScene > 0) {
-      setCurrentScene(prev => prev - 1);
+      const newScene = currentScene - 1;
+      setCurrentScene(newScene);
+      if (isInAR) {
+        await loadModel(newScene);
+      }
     }
-  };
-
-  const toggleAutoPlay = () => {
-    setAutoPlay(!autoPlay);
   };
 
   return (
     <>
-      <Script
-        type="module"
-        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"
-      />
-
       <div className="min-h-screen" style={{backgroundColor: '#F8F5F2'}}>
-        {/* Navigation */}
-        <nav className="fixed top-0 w-full backdrop-blur-md z-50 border-b" style={{backgroundColor: 'rgba(248, 245, 242, 0.95)', borderColor: '#D4A373'}}>
-          <div className="px-4 sm:px-6 lg:px-8 py-4">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img src="/1.svg" alt="Lelana Logo" className="h-10" />
-              </div>
-              <div className="flex items-center gap-4">
-                <a href="/" className="text-sm font-medium transition" style={{color: '#473C8B'}}>
-                  ← Kembali ke Home
-                </a>
-              </div>
-            </div>
+        {/* Canvas */}
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: isInAR ? 'fixed' : 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: isInAR ? 'block' : 'none',
+            zIndex: 0
+          }}
+        />
+
+        {/* AR Overlay */}
+        <div
+          id="ar-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: isInAR ? 'auto' : 'none',
+            display: isInAR ? 'flex' : 'none',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            zIndex: 1
+          }}
+        >
+          {/* Script text overlay */}
+          <div style={{
+            backgroundColor: 'rgba(71, 60, 139, 0.95)',
+            color: 'white',
+            padding: '1rem',
+            margin: '1rem',
+            borderRadius: '12px',
+            textAlign: 'center',
+            fontSize: '1rem',
+            fontWeight: '500',
+            maxWidth: '90%',
+            alignSelf: 'center'
+          }}>
+            {scenes[currentScene].script}
           </div>
-        </nav>
 
-        {/* Main Content */}
-        <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-16">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="text-center space-y-4 mb-12">
-              <h1 className="text-4xl sm:text-5xl font-bold" style={{color: '#1B1B1E'}}>
-                Pengalaman AR Budaya
-              </h1>
-              <div className="inline-block px-6 py-2 rounded-full font-medium text-sm" style={{backgroundColor: '#D4A373', color: 'white'}}>
-                Scene {currentScene + 1} dari {scenes.length}
+          {/* Bottom controls */}
+          <div style={{
+            backgroundColor: 'rgba(248, 245, 242, 0.95)',
+            padding: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{
+                backgroundColor: '#D4A373',
+                color: 'white',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                fontWeight: 'bold'
+              }}>
+                Scene {currentScene + 1}/{scenes.length}
               </div>
-            </div>
 
-            {/* AR Viewer Card */}
-            <div className="rounded-3xl shadow-lg overflow-hidden mb-8" style={{backgroundColor: 'white', border: '2px solid #D4A373'}}>
-              <model-viewer
-                ref={modelViewerRef}
-                key={currentScene}
-                src={scenes[currentScene].model}
-                ar
-                ar-modes="scene-viewer webxr quick-look"
-                camera-controls
-                touch-action="pan-y"
-                alt={`3D model for scene ${currentScene + 1}`}
-                shadow-intensity="1"
-                auto-rotate
-                auto-rotate-delay="0"
-                rotation-per-second="30deg"
-                camera-orbit="0deg 75deg 2.5m"
-                style={{
-                  width: '100%',
-                  height: '500px',
-                  backgroundColor: '#F8F5F2'
-                }}
-              >
-                <button slot="ar-button" className="px-6 py-3 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105" style={{backgroundColor: '#473C8B', position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)'}}>
-                  👁️ Lihat dalam AR
-                </button>
-              </model-viewer>
-            </div>
-
-            {/* Script Display Card */}
-            <div className="rounded-3xl p-8 mb-8 relative overflow-hidden" style={{backgroundColor: '#473C8B'}}>
-              <div className="absolute inset-0 opacity-10" style={{
-                backgroundImage: 'url(/batik.png)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}></div>
-              <div className="relative z-10 space-y-4">
-                {scenes[currentScene].script.map((line, index) => (
-                  <p
-                    key={index}
-                    className={`text-xl leading-relaxed text-center font-light transition-all duration-500 ${index <= scriptIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                    style={{color: '#F8F5F2'}}
-                  >
-                    {line}
-                  </p>
-                ))}
-              </div>
-            </div>
-
-            {/* Navigation Controls */}
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
               <button
-                onClick={toggleAutoPlay}
-                className="px-8 py-3 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105"
+                onClick={() => setAutoPlay(!autoPlay)}
                 style={{
                   backgroundColor: autoPlay ? '#FFC857' : '#D4A373',
-                  color: autoPlay ? '#1B1B1E' : 'white'
+                  color: autoPlay ? '#1B1B1E' : 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
                 }}
               >
-                {autoPlay ? '⏸️ Jeda' : '▶️ Auto Play'}
+                {autoPlay ? '⏸️ Pause' : '▶️ Auto'}
               </button>
+
               <button
                 onClick={prevScene}
                 disabled={currentScene === 0}
-                className="px-8 py-3 font-semibold rounded-lg border-2 transition-all duration-300"
                 style={{
-                  borderColor: '#473C8B',
-                  color: '#473C8B',
                   backgroundColor: 'white',
-                  opacity: currentScene === 0 ? 0.5 : 1,
-                  cursor: currentScene === 0 ? 'not-allowed' : 'pointer'
+                  color: '#473C8B',
+                  border: '2px solid #473C8B',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  cursor: currentScene === 0 ? 'not-allowed' : 'pointer',
+                  opacity: currentScene === 0 ? 0.5 : 1
                 }}
               >
-                ← Sebelumnya
+                ← Prev
               </button>
+
               <button
                 onClick={nextScene}
                 disabled={currentScene === scenes.length - 1}
-                className="px-8 py-3 font-semibold rounded-lg border-2 transition-all duration-300"
                 style={{
-                  borderColor: '#473C8B',
-                  color: '#473C8B',
                   backgroundColor: 'white',
-                  opacity: currentScene === scenes.length - 1 ? 0.5 : 1,
-                  cursor: currentScene === scenes.length - 1 ? 'not-allowed' : 'pointer'
+                  color: '#473C8B',
+                  border: '2px solid #473C8B',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  cursor: currentScene === scenes.length - 1 ? 'not-allowed' : 'pointer',
+                  opacity: currentScene === scenes.length - 1 ? 0.5 : 1
                 }}
               >
-                Selanjutnya →
+                Next →
               </button>
             </div>
 
-            {/* Instructions Card */}
-            <div className="rounded-3xl p-8 backdrop-blur-sm" style={{backgroundColor: 'rgba(212, 163, 115, 0.15)', border: '1px solid #D4A373'}}>
-              <h3 className="font-bold text-xl mb-4" style={{color: '#1B1B1E'}}>Cara Menggunakan:</h3>
-              <ul className="space-y-3" style={{color: '#473C8B'}}>
-                <li className="flex items-start gap-2">
-                  <span style={{color: '#D4A373'}}>•</span>
-                  <span>Putar dan zoom model 3D di viewer</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span style={{color: '#D4A373'}}>•</span>
-                  <span>Klik "Lihat dalam AR" untuk mode AR</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span style={{color: '#D4A373'}}>•</span>
-                  <span>Navigasi antar scene dengan tombol di atas</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span style={{color: '#D4A373'}}>•</span>
-                  <span>Aktifkan Auto Play untuk pengalaman otomatis</span>
-                </li>
-              </ul>
-              <div className="mt-6 p-4 rounded-lg" style={{backgroundColor: 'rgba(71, 60, 139, 0.1)'}}>
-                <p className="text-sm font-semibold mb-2" style={{color: '#473C8B'}}>
-                  📱 Kompatibilitas AR:
-                </p>
-                <p className="text-sm" style={{color: '#473C8B'}}>
-                  <strong>Android:</strong> Scene Viewer (Chrome/Edge)<br/>
-                  <strong>iPhone:</strong> Quick Look AR (Safari)<br/>
-                  Fitur AR mungkin berbeda per platform.
-                </p>
-              </div>
-            </div>
+            <p style={{
+              textAlign: 'center',
+              fontSize: '0.85rem',
+              color: '#473C8B',
+              margin: 0
+            }}>
+              👆 Tap screen to place model
+            </p>
           </div>
         </div>
+
+        {/* Regular UI */}
+        {!isInAR && (
+          <>
+            <nav className="fixed top-0 w-full backdrop-blur-md z-50 border-b" style={{backgroundColor: 'rgba(248, 245, 242, 0.95)', borderColor: '#D4A373'}}>
+              <div className="px-4 sm:px-6 lg:px-8 py-4">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img src="/1.svg" alt="Lelana Logo" className="h-10" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <a href="/" className="text-sm font-medium transition" style={{color: '#473C8B'}}>
+                      ← Kembali ke Home
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </nav>
+
+            <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-16">
+              <div className="max-w-7xl mx-auto">
+                <div className="text-center space-y-4 mb-12">
+                  <h1 className="text-4xl sm:text-5xl font-bold" style={{color: '#1B1B1E'}}>
+                    WebXR AR Experience
+                  </h1>
+                  <div className="inline-block px-6 py-2 rounded-full font-medium text-sm" style={{backgroundColor: '#D4A373', color: 'white'}}>
+                    Scene {currentScene + 1} dari {scenes.length}
+                  </div>
+                  <div className="text-sm px-4 py-2 rounded-lg inline-block" style={{
+                    backgroundColor: isReady && arSupported ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)',
+                    color: isReady && arSupported ? '#4CAF50' : '#FF9800'
+                  }}>
+                    {statusMessage}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl shadow-lg p-8 mb-8 text-center" style={{backgroundColor: 'white', border: '2px solid #D4A373'}}>
+                  <div className="mb-6 p-8" style={{color: '#473C8B', fontSize: '1.1rem'}}>
+                    <p className="mb-4">📱 Current Scene:</p>
+                    <p className="font-bold text-xl">{scenes[currentScene].model.split('/').pop()}</p>
+                  </div>
+
+                  <button
+                    onClick={startAR}
+                    disabled={!isReady || !arSupported}
+                    className="px-8 py-4 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105"
+                    style={{
+                      backgroundColor: (isReady && arSupported) ? '#473C8B' : '#ccc',
+                      cursor: (isReady && arSupported) ? 'pointer' : 'not-allowed',
+                      opacity: (isReady && arSupported) ? 1 : 0.6
+                    }}
+                  >
+                    {!isReady ? '⏳ Loading...' : '👁️ Start AR'}
+                  </button>
+                </div>
+
+                <div className="rounded-3xl p-8 mb-8 relative overflow-hidden" style={{backgroundColor: '#473C8B'}}>
+                  <div className="absolute inset-0 opacity-10" style={{
+                    backgroundImage: 'url(/batik.png)',
+                    backgroundSize: 'cover'
+                  }}></div>
+                  <p className="relative z-10 text-xl text-center font-light leading-relaxed" style={{color: '#F8F5F2'}}>
+                    {scenes[currentScene].script}
+                  </p>
+                </div>
+
+                <div className="rounded-3xl p-8 backdrop-blur-sm" style={{backgroundColor: 'rgba(212, 163, 115, 0.15)', border: '1px solid #D4A373'}}>
+                  <h3 className="font-bold text-xl mb-4" style={{color: '#1B1B1E'}}>WebXR Features:</h3>
+                  <ul className="space-y-3 mb-4" style={{color: '#473C8B'}}>
+                    <li>✅ Surface detection & placement</li>
+                    <li>✅ Auto-rotate models</li>
+                    <li>✅ Text overlay in AR</li>
+                    <li>✅ Scene switching in AR</li>
+                    <li>✅ Auto-play mode</li>
+                  </ul>
+                  <div className="p-4 rounded-lg" style={{backgroundColor: 'rgba(71, 60, 139, 0.1)'}}>
+                    <p className="text-sm font-semibold mb-2" style={{color: '#473C8B'}}>
+                      📱 Tested on Samsung A52s:
+                    </p>
+                    <ul className="text-sm space-y-1" style={{color: '#473C8B'}}>
+                      <li>• Chrome 79+ or Edge browser</li>
+                      <li>• HTTPS connection required</li>
+                      <li>• Allow camera permission</li>
+                      <li>• ARCore enabled (built-in)</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
