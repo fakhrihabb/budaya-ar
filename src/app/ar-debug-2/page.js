@@ -16,6 +16,7 @@ export default function ARDebug2Page() {
   const hitTestSourceRef = useRef(null);
   const reticleRef = useRef(null);
   const placedModelRef = useRef(null);
+  const statusIndicatorRef = useRef(null);
 
   const addLog = (message) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -95,7 +96,21 @@ export default function ARDebug2Page() {
         reticleRef.current = reticle;
         addLog('✅ Reticle created (green pulsing ring)');
 
-        rendererRef.current = { THREE, renderer, scene, camera, reticleMaterial };
+        // Create 3D status indicator (visible in AR)
+        const statusGeometry = new THREE.PlaneGeometry(0.5, 0.15);
+        const statusMaterial = new THREE.MeshBasicMaterial({ 
+          color: 0xFF8C00,
+          transparent: true,
+          opacity: 0.9,
+          side: THREE.DoubleSide
+        });
+        const statusIndicator = new THREE.Mesh(statusGeometry, statusMaterial);
+        statusIndicator.visible = false;
+        scene.add(statusIndicator);
+        statusIndicatorRef.current = statusIndicator;
+        addLog('✅ 3D status indicator created');
+
+        rendererRef.current = { THREE, renderer, scene, camera, reticleMaterial, statusMaterial };
         addLog('✅ Three.js initialized successfully');
 
         let pulseTime = 0;
@@ -105,6 +120,19 @@ export default function ARDebug2Page() {
           if (frame && xrSessionRef.current) {
             const referenceSpace = renderer.xr.getReferenceSpace();
             const reticle = reticleRef.current;
+            const statusIndicator = statusIndicatorRef.current;
+            const camera = renderer.xr.getCamera();
+
+            // Position status indicator in front of camera
+            if (statusIndicator && camera) {
+              const cameraDirection = new THREE.Vector3();
+              camera.getWorldDirection(cameraDirection);
+              const indicatorPosition = camera.position.clone();
+              indicatorPosition.add(cameraDirection.multiplyScalar(1.5)); // 1.5m in front
+              indicatorPosition.y += 0.3; // Slightly above center
+              statusIndicator.position.copy(indicatorPosition);
+              statusIndicator.lookAt(camera.position);
+            }
 
             // Perform hit test to find surfaces
             if (hitTestSourceRef.current && referenceSpace && reticle) {
@@ -120,6 +148,12 @@ export default function ARDebug2Page() {
                 const scale = 1 + Math.sin(pulseTime) * 0.2;
                 reticle.scale.set(scale, scale, scale);
                 
+                // Update status indicator - GREEN
+                if (statusIndicator) {
+                  statusIndicator.visible = true;
+                  statusIndicator.material.color.setHex(0x00FF00); // Green
+                }
+                
                 // Update UI state and log change
                 if (!lastSurfaceState) {
                   addLog('✅ Surface detected!');
@@ -128,6 +162,16 @@ export default function ARDebug2Page() {
                 setSurfaceFound(true);
               } else {
                 reticle.visible = false;
+                
+                // Update status indicator - ORANGE (scanning)
+                if (statusIndicator) {
+                  statusIndicator.visible = true;
+                  statusIndicator.material.color.setHex(0xFF8C00); // Orange
+                  // Pulse animation
+                  const opacity = 0.7 + Math.sin(timestamp * 0.003) * 0.3;
+                  statusIndicator.material.opacity = opacity;
+                }
+                
                 if (lastSurfaceState) {
                   addLog('⚠️ Surface lost, keep scanning...');
                   lastSurfaceState = false;
@@ -169,11 +213,16 @@ export default function ARDebug2Page() {
 
     try {
       addLog('🚀 Starting AR session...');
+      
+      // Get overlay element
+      const overlayElement = document.getElementById('ar-overlay');
+      
       const sessionOptions = {
         requiredFeatures: ['hit-test'],
         optionalFeatures: ['dom-overlay'],
+        domOverlay: overlayElement ? { root: overlayElement } : undefined
       };
-      addLog(`Session options: ${JSON.stringify(sessionOptions)}`);
+      addLog(`Session options: ${JSON.stringify({requiredFeatures: sessionOptions.requiredFeatures, optionalFeatures: sessionOptions.optionalFeatures, hasDomOverlay: !!overlayElement})}`);
 
       const session = await navigator.xr.requestSession('immersive-ar', sessionOptions);
       addLog('✅ AR session created!');
@@ -248,11 +297,18 @@ export default function ARDebug2Page() {
       rendererRef.current.scene.add(controller);
       addLog('✅ Tap-to-place controller ready');
       
+      // Show 3D status indicator
+      if (statusIndicatorRef.current) {
+        statusIndicatorRef.current.visible = true;
+        addLog('✅ 3D status indicator activated');
+      }
+      
       setSessionActive(true);
       setIsScanning(true);
       setSurfaceFound(false);
       addLog('🎉 AR Session fully active!');
       addLog('📡 Scanning for surfaces...');
+      addLog('🟠 Look for ORANGE indicator in AR view');
 
       // Handle session end
       session.addEventListener('end', () => {
@@ -271,6 +327,10 @@ export default function ARDebug2Page() {
         
         if (reticleRef.current) {
           reticleRef.current.visible = false;
+        }
+        
+        if (statusIndicatorRef.current) {
+          statusIndicatorRef.current.visible = false;
         }
       });
 
