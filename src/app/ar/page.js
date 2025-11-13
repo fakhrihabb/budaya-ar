@@ -372,7 +372,38 @@ export default function ARPage() {
 
   return (
     <>
-      <div className="min-h-screen" style={{backgroundColor: '#F8F5F2'}}>
+      <div className="min-h-screen relative overflow-hidden" style={{
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f5ff 50%, #fff9f5 100%)'
+      }}>
+        {/* Animated Background Elements (only show when not in AR) */}
+        {!isInAR && (
+          <div className="fixed inset-0 pointer-events-none">
+            {/* Floating Orbs */}
+            <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-30" style={{
+              background: 'radial-gradient(circle, rgba(138, 127, 216, 0.3), transparent 70%)',
+              animation: 'float 8s ease-in-out infinite',
+              filter: 'blur(40px)'
+            }} />
+            <div className="absolute bottom-40 right-10 w-80 h-80 rounded-full opacity-30" style={{
+              background: 'radial-gradient(circle, rgba(212, 163, 115, 0.3), transparent 70%)',
+              animation: 'float 10s ease-in-out infinite reverse',
+              filter: 'blur(40px)'
+            }} />
+            <div className="absolute top-1/2 left-1/3 w-72 h-72 rounded-full opacity-20" style={{
+              background: 'radial-gradient(circle, rgba(255, 200, 87, 0.25), transparent 70%)',
+              animation: 'float 12s ease-in-out infinite',
+              filter: 'blur(50px)'
+            }} />
+
+            {/* Animated Grid */}
+            <div className="absolute inset-0 opacity-10" style={{
+              backgroundImage: 'linear-gradient(#473C8B 1px, transparent 1px), linear-gradient(90deg, #473C8B 1px, transparent 1px)',
+              backgroundSize: '50px 50px',
+              animation: 'gridMove 20s linear infinite'
+            }} />
+          </div>
+        )}
+
         {/* Canvas */}
         <canvas
           ref={canvasRef}
@@ -512,81 +543,166 @@ export default function ARPage() {
         {/* Regular UI */}
         {!isInAR && (
           <>
-            <div className="pt-8 px-4 sm:px-6 lg:px-8 pb-24">
+            <div className="pt-8 px-4 sm:px-6 lg:px-8 pb-24 relative z-10">
               <div className="max-w-7xl mx-auto">
                 <div className="text-center space-y-4 mb-12">
-                  <h1 className="text-4xl sm:text-5xl font-bold" style={{color: '#1B1B1E'}}>
+                  <h1 className="text-4xl sm:text-5xl font-bold" style={{
+                    color: '#1B1B1E',
+                    textShadow: '0 0 20px rgba(138, 127, 216, 0.2)'
+                  }}>
                     WebXR AR Experience
                   </h1>
-                  <div className="inline-block px-6 py-2 rounded-full font-medium text-sm" style={{backgroundColor: '#D4A373', color: 'white'}}>
-                    Scene {currentScene + 1} dari {scenes.length}
+                  <div className="inline-block px-6 py-3 rounded-full font-semibold text-sm relative overflow-hidden" style={{
+                    background: 'linear-gradient(135deg, #D4A373 0%, #F4A460 100%)',
+                    color: 'white',
+                    border: '2px solid rgba(212, 163, 115, 0.4)',
+                    boxShadow: '0 0 20px rgba(212, 163, 115, 0.3)',
+                    textShadow: '0 0 10px rgba(255, 255, 255, 0.5)'
+                  }}>
+                    <div className="absolute inset-0 opacity-30" style={{
+                      background: 'linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                      animation: 'shimmer 2s infinite'
+                    }} />
+                    <span className="relative z-10">Scene {currentScene + 1} dari {scenes.length}</span>
                   </div>
-                  <div className="text-sm px-4 py-2 rounded-lg inline-block" style={{
-                    backgroundColor: isReady && arSupported ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)',
-                    color: isReady && arSupported ? '#4CAF50' : '#FF9800'
+                  <div className="text-sm px-4 py-2 rounded-2xl inline-block" style={{
+                    background: isReady && arSupported
+                      ? 'rgba(76, 175, 80, 0.15)'
+                      : 'rgba(255, 152, 0, 0.15)',
+                    color: isReady && arSupported ? '#4CAF50' : '#FF9800',
+                    border: `2px solid ${isReady && arSupported ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 152, 0, 0.3)'}`,
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: `0 0 15px ${isReady && arSupported ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)'}`
                   }}>
                     {statusMessage}
                   </div>
                 </div>
 
-                <div className="rounded-3xl shadow-lg p-8 mb-8 text-center" style={{backgroundColor: 'white', border: '2px solid #D4A373'}}>
-                  <div className="mb-6 p-8" style={{color: '#473C8B', fontSize: '1.1rem'}}>
-                    <p className="mb-4">📱 Current Scene:</p>
-                    <p className="font-bold text-xl">{scenes[currentScene].model.split('/').pop()}</p>
+                <div className="relative rounded-3xl p-8 mb-8 text-center overflow-hidden" style={{
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '2px solid rgba(212, 163, 115, 0.3)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+                }}>
+                  {/* Subtle glow effect */}
+                  <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
+                    background: 'radial-gradient(circle at top, rgba(212, 163, 115, 0.2), transparent 70%)'
+                  }} />
+
+                  <div className="mb-6 p-8 relative z-10" style={{color: '#473C8B', fontSize: '1.1rem'}}>
+                    <p className="mb-4 font-semibold">📱 Current Scene:</p>
+                    <p className="font-bold text-xl" style={{
+                      textShadow: '0 0 15px rgba(138, 127, 216, 0.2)'
+                    }}>{scenes[currentScene].model.split('/').pop()}</p>
                   </div>
 
                   <button
                     onClick={startAR}
                     disabled={!isReady || !arSupported}
-                    className="px-8 py-4 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105"
+                    className="relative px-8 py-4 text-white font-bold rounded-2xl transition-all duration-300 overflow-hidden group"
                     style={{
-                      backgroundColor: (isReady && arSupported) ? '#473C8B' : '#ccc',
+                      background: (isReady && arSupported)
+                        ? 'linear-gradient(135deg, #473C8B 0%, #6B5FBD 100%)'
+                        : '#ccc',
                       cursor: (isReady && arSupported) ? 'pointer' : 'not-allowed',
-                      opacity: (isReady && arSupported) ? 1 : 0.6
+                      opacity: (isReady && arSupported) ? 1 : 0.6,
+                      border: '2px solid rgba(138, 127, 216, 0.4)',
+                      boxShadow: (isReady && arSupported)
+                        ? '0 0 30px rgba(138, 127, 216, 0.3)'
+                        : 'none',
+                      textShadow: (isReady && arSupported)
+                        ? '0 0 10px rgba(255, 255, 255, 0.5)'
+                        : 'none',
+                      transform: 'scale(1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (isReady && arSupported) {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 0 40px rgba(138, 127, 216, 0.5)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (isReady && arSupported) {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 0 30px rgba(138, 127, 216, 0.3)';
+                      }
                     }}
                   >
-                    {!isReady ? '⏳ Loading...' : '👁️ Start AR'}
+                    {(isReady && arSupported) && (
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
+                        background: 'linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.15), transparent)',
+                        animation: 'shimmer 2s infinite'
+                      }} />
+                    )}
+                    <span className="relative z-10">{!isReady ? '⏳ Loading...' : '👁️ Start AR'}</span>
                   </button>
                 </div>
 
-                <div className="rounded-3xl p-8 mb-8 relative overflow-hidden" style={{backgroundColor: '#473C8B'}}>
-                  <div className="absolute inset-0 opacity-10" style={{
-                    backgroundImage: 'url(/batik.png)',
-                    backgroundSize: 'cover'
-                  }}></div>
-                  <p className="relative z-10 text-xl text-center font-light leading-relaxed" style={{color: '#F8F5F2'}}>
+                <div className="relative rounded-3xl p-8 mb-8 overflow-hidden" style={{
+                  background: 'linear-gradient(135deg, #473C8B 0%, #6B5FBD 100%)',
+                  border: '2px solid rgba(138, 127, 216, 0.4)',
+                  boxShadow: '0 0 30px rgba(138, 127, 216, 0.3)'
+                }}>
+                  <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
+                    background: 'radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.2), transparent 70%)'
+                  }} />
+                  <p className="relative z-10 text-xl text-center font-light leading-relaxed" style={{
+                    color: '#F8F5F2',
+                    textShadow: '0 0 15px rgba(255, 255, 255, 0.3)'
+                  }}>
                     {scenes[currentScene].script}
                   </p>
                 </div>
 
-                <div className="rounded-3xl p-8 backdrop-blur-sm" style={{backgroundColor: 'rgba(212, 163, 115, 0.15)', border: '1px solid #D4A373'}}>
-                  <h3 className="font-bold text-xl mb-4" style={{color: '#1B1B1E'}}>WebXR Features:</h3>
-                  <ul className="space-y-3 mb-4" style={{color: '#473C8B'}}>
+                <div className="relative rounded-3xl p-8 overflow-hidden" style={{
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '2px solid rgba(212, 163, 115, 0.3)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+                }}>
+                  {/* Subtle glow effect */}
+                  <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
+                    background: 'radial-gradient(circle at top left, rgba(212, 163, 115, 0.2), transparent 70%)'
+                  }} />
+
+                  <h3 className="font-bold text-xl mb-4 relative z-10" style={{
+                    color: '#1B1B1E',
+                    textShadow: '0 0 15px rgba(138, 127, 216, 0.2)'
+                  }}>WebXR Features:</h3>
+                  <ul className="space-y-3 mb-4 relative z-10" style={{color: '#8B7355'}}>
                     <li>✅ Surface detection & placement</li>
                     <li>✅ Auto-rotate models</li>
                     <li>✅ Text overlay in AR</li>
                     <li>✅ Scene switching in AR</li>
                     <li>✅ Auto-play mode</li>
                   </ul>
-                  <div className="p-4 rounded-lg mb-4" style={{backgroundColor: 'rgba(71, 60, 139, 0.1)'}}>
-                    <p className="text-sm font-semibold mb-2" style={{color: '#473C8B'}}>
+                  <div className="p-4 rounded-2xl mb-4 relative z-10" style={{
+                    background: 'rgba(138, 127, 216, 0.15)',
+                    border: '2px solid rgba(138, 127, 216, 0.25)',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    <p className="text-sm font-bold mb-2" style={{color: '#473C8B'}}>
                       📱 Requirements:
                     </p>
-                    <ul className="text-sm space-y-1" style={{color: '#473C8B'}}>
+                    <ul className="text-sm space-y-1" style={{color: '#6B5FBD'}}>
                       <li>• Chrome 79+ or Edge browser</li>
                       <li>• HTTPS connection required</li>
                       <li>• Allow camera permission</li>
                       <li>• ARCore installed (Android)</li>
                     </ul>
                   </div>
-                  <div className="p-4 rounded-lg" style={{backgroundColor: 'rgba(255, 152, 0, 0.1)', borderLeft: '3px solid #FF9800'}}>
-                    <p className="text-sm font-semibold mb-2" style={{color: '#FF9800'}}>
+                  <div className="p-4 rounded-2xl relative z-10" style={{
+                    background: 'rgba(255, 152, 0, 0.15)',
+                    borderLeft: '4px solid #FF9800',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    <p className="text-sm font-bold mb-2" style={{color: '#FF9800'}}>
                       🔧 Jika masih error:
                     </p>
-                    <ol className="text-sm space-y-1" style={{color: '#473C8B'}}>
+                    <ol className="text-sm space-y-1" style={{color: '#8B7355'}}>
                       <li>1. Buka chrome://flags di Chrome</li>
-                      <li>2. Cari "WebXR Incubations"</li>
-                      <li>3. Set ke "Enabled"</li>
+                      <li>2. Cari &quot;WebXR Incubations&quot;</li>
+                      <li>3. Set ke &quot;Enabled&quot;</li>
                       <li>4. Restart Chrome</li>
                       <li>5. Cek Console Log (chrome://inspect)</li>
                     </ol>
@@ -597,6 +713,39 @@ export default function ARPage() {
           </>
         )}
       </div>
+
+      {/* Animations */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0) translateX(0);
+          }
+          33% {
+            transform: translateY(-20px) translateX(10px);
+          }
+          66% {
+            transform: translateY(-10px) translateX(-10px);
+          }
+        }
+
+        @keyframes gridMove {
+          0% {
+            transform: translateY(0);
+          }
+          100% {
+            transform: translateY(50px);
+          }
+        }
+
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+      `}</style>
     </>
   );
 }

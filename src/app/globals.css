@@ -107,16 +107,20 @@ body {
   }
 }
 
-/* Bottom Navigation Bar Styles */
+/* Bottom Navigation Bar Styles - Modern Futuristic Design */
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  background: rgba(248, 245, 242, 0.98);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid #D4A373;
-  padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-top: 2px solid rgba(138, 127, 216, 0.3);
+  padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
   z-index: 50;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 
+    0 -8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 60px rgba(138, 127, 216, 0.2);
 }
 
 /* Mobile: Full width */
@@ -144,73 +148,136 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  padding: 0.5rem;
+  padding: 0.625rem 0.5rem;
   color: #473C8B;
   text-decoration: none;
-  transition: all 0.2s ease;
-  border-radius: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 1rem;
   min-width: 60px;
+  position: relative;
 }
 
-.bottom-nav-item:hover,
+.bottom-nav-item:hover {
+  color: #8A7FD8;
+  background: rgba(138, 127, 216, 0.08);
+  transform: translateY(-2px);
+}
+
 .bottom-nav-item.active {
-  color: #D4A373;
-  background: rgba(212, 163, 115, 0.1);
+  color: var(--item-color, #D4A373);
+  background: rgba(138, 127, 216, 0.12);
+  border: 1.5px solid rgba(138, 127, 216, 0.25);
+  box-shadow: 
+    0 0 20px var(--item-neon, rgba(138, 127, 216, 0.25)),
+    inset 0 0 15px rgba(138, 127, 216, 0.08);
+}
+
+.bottom-nav-item.active:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 0 30px var(--item-neon, rgba(138, 127, 216, 0.35)),
+    inset 0 0 20px rgba(138, 127, 216, 0.1);
 }
 
 .bottom-nav-item svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
+  transition: all 0.3s ease;
+}
+
+.bottom-nav-item:hover svg {
+  transform: scale(1.1);
 }
 
 .bottom-nav-item span {
-  font-size: 0.7rem;
-  font-weight: 500;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-/* AR Button - Circular with brand purple */
+/* AR Button - Enhanced Modern Design */
 .bottom-nav-item.ar-button {
-  background: #473C8B;
+  background: linear-gradient(135deg, var(--item-color, #473C8B) 0%, color-mix(in srgb, var(--item-color, #473C8B) 80%, black) 100%);
   color: white;
   border-radius: 50%;
-  border: 3px solid white;
-  width: 70px;
-  height: 70px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  width: 72px;
+  height: 72px;
   padding: 0.5rem 0;
-  margin-top: -25px;
-  box-shadow: 0 4px 12px rgba(71, 60, 139, 0.4);
-  transition: all 0.3s ease;
+  margin-top: -28px;
+  box-shadow: 
+    0 8px 24px color-mix(in srgb, var(--item-color, #473C8B) 40%, transparent),
+    0 0 40px color-mix(in srgb, var(--item-neon, #8A7FD8) 25%, transparent),
+    inset 0 0 20px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   gap: 0.15rem;
+  position: relative;
+  overflow: visible;
+}
+
+.bottom-nav-item.ar-button::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--item-neon, #8A7FD8) 60%, transparent), color-mix(in srgb, var(--item-color, #473C8B) 40%, transparent));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bottom-nav-item.ar-button:hover::before {
+  opacity: 1;
 }
 
 .bottom-nav-item.ar-button:hover {
-  background: #3d3478;
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(71, 60, 139, 0.5);
-  color: white;
+  transform: translateY(-30px) scale(1.08);
+  box-shadow: 
+    0 12px 32px color-mix(in srgb, var(--item-color, #473C8B) 50%, transparent),
+    0 0 50px color-mix(in srgb, var(--item-neon, #8A7FD8) 35%, transparent),
+    inset 0 0 30px rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 1);
 }
 
 .bottom-nav-item.ar-button.active {
-  background: #D4A373;
-  color: white;
-  box-shadow: 0 4px 12px rgba(212, 163, 115, 0.4);
+  background: linear-gradient(135deg, var(--item-color, #FFC857) 0%, color-mix(in srgb, var(--item-color, #FFC857) 80%, black) 100%);
+  box-shadow: 
+    0 8px 24px color-mix(in srgb, var(--item-color, #FFC857) 45%, transparent),
+    0 0 40px color-mix(in srgb, var(--item-neon, #FFD700) 30%, transparent),
+    inset 0 0 20px rgba(255, 255, 255, 0.15);
+}
+
+.bottom-nav-item.ar-button.active::before {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--item-neon, #FFD700) 60%, transparent), color-mix(in srgb, var(--item-color, #FFC857) 40%, transparent));
 }
 
 .bottom-nav-item.ar-button.active:hover {
-  background: #C89563;
-  color: white;
-  box-shadow: 0 6px 16px rgba(212, 163, 115, 0.5);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--item-color, #FFC857) 120%, white) 0%, var(--item-color, #FFC857) 100%);
+  box-shadow: 
+    0 12px 32px color-mix(in srgb, var(--item-color, #FFC857) 55%, transparent),
+    0 0 50px color-mix(in srgb, var(--item-neon, #FFD700) 40%, transparent),
+    inset 0 0 30px rgba(255, 255, 255, 0.2);
 }
 
 .bottom-nav-item.ar-button svg {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+}
+
+.bottom-nav-item.ar-button.active svg {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--item-neon, #FFD700) 80%, transparent));
 }
 
 .bottom-nav-item.ar-button span {
   font-size: 0.6rem;
   font-weight: 700;
   margin-top: 0;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.02em;
 }
 
 /* Smooth transitions for interactive elements */
