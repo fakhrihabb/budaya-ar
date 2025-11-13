@@ -55,12 +55,13 @@ export default function BottomNav() {
       <div className="flex justify-around items-center max-w-md mx-auto px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const isAR = item.label === 'AR';
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={(e) => handleSmoothScroll(e, item.href)}
-              className={`bottom-nav-item ${item.active ? 'active' : ''}`}
+              className={`bottom-nav-item ${item.active ? 'active' : ''} ${isAR ? 'ar-button' : ''}`}
             >
               <Icon />
               <span>{item.label}</span>

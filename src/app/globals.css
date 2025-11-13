@@ -168,6 +168,51 @@ body {
   font-weight: 500;
 }
 
+/* AR Button - Circular with brand purple */
+.bottom-nav-item.ar-button {
+  background: #473C8B;
+  color: white;
+  border-radius: 50%;
+  border: 3px solid white;
+  width: 70px;
+  height: 70px;
+  padding: 0.5rem 0;
+  margin-top: -25px;
+  box-shadow: 0 4px 12px rgba(71, 60, 139, 0.4);
+  transition: all 0.3s ease;
+  gap: 0.15rem;
+}
+
+.bottom-nav-item.ar-button:hover {
+  background: #3d3478;
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(71, 60, 139, 0.5);
+  color: white;
+}
+
+.bottom-nav-item.ar-button.active {
+  background: #D4A373;
+  color: white;
+  box-shadow: 0 4px 12px rgba(212, 163, 115, 0.4);
+}
+
+.bottom-nav-item.ar-button.active:hover {
+  background: #C89563;
+  color: white;
+  box-shadow: 0 6px 16px rgba(212, 163, 115, 0.5);
+}
+
+.bottom-nav-item.ar-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.bottom-nav-item.ar-button span {
+  font-size: 0.6rem;
+  font-weight: 700;
+  margin-top: 0;
+}
+
 /* Smooth transitions for interactive elements */
 @media (prefers-reduced-motion: no-preference) {
   html {
