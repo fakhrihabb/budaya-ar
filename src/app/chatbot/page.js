@@ -117,7 +117,7 @@ export default function ChatbotPage() {
             </div>
             <div className="flex items-center gap-4">
               <a href="/" className="text-sm font-medium transition hover:opacity-70" style={{color: '#473C8B'}}>
-                ← Kembali ke Home
+                ← Home
               </a>
             </div>
           </div>
