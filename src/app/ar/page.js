@@ -270,13 +270,38 @@ export default function ARPage() {
       setIsInAR(true);
       setStatusMessage('AR Active');
 
-      // Set up hit test if supported
+      // Set up hit test if supported - try different reference spaces
       try {
-        const referenceSpace = await session.requestReferenceSpace('viewer');
+        let referenceSpace;
+
+        // Try local-floor first (most common for AR)
+        try {
+          console.log('Trying local-floor reference space...');
+          referenceSpace = await session.requestReferenceSpace('local-floor');
+          console.log('✅ local-floor reference space created');
+        } catch (e1) {
+          console.warn('❌ local-floor failed:', e1.message);
+
+          // Fallback to local
+          try {
+            console.log('Trying local reference space...');
+            referenceSpace = await session.requestReferenceSpace('local');
+            console.log('✅ local reference space created');
+          } catch (e2) {
+            console.warn('❌ local failed:', e2.message);
+
+            // Last resort: viewer
+            console.log('Trying viewer reference space...');
+            referenceSpace = await session.requestReferenceSpace('viewer');
+            console.log('✅ viewer reference space created');
+          }
+        }
+
+        // Now try to create hit test source
         hitTestSourceRef.current = await session.requestHitTestSource({ space: referenceSpace });
         console.log('✅ Hit-test source created');
       } catch (hitTestError) {
-        console.warn('⚠️ Hit-test not available:', hitTestError.message);
+        console.warn('⚠️ Hit-test not available:', hitTestError.name, hitTestError.message);
         console.log('AR will work but without surface detection reticle');
       }
 
