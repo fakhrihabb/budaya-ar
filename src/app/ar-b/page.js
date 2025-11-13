@@ -8,6 +8,7 @@ export default function ARBPage() {
   const [statusMessage, setStatusMessage] = useState('Initializing...');
   const [currentScene, setCurrentScene] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(false);
 
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
@@ -17,6 +18,7 @@ export default function ARBPage() {
   const placedModelRef = useRef(null);
   const controllerRef = useRef(null);
   const speechSynthesisRef = useRef(null);
+  const autoPlayTimerRef = useRef(null);
 
   // Scenes with models and scripts
   const scenes = [
@@ -223,12 +225,57 @@ export default function ARBPage() {
           console.error(`Failed to load ${scenes[newScene].name}`);
         }
       }
+
+      // Schedule next auto-play if enabled
+      if (autoPlay && newScene < scenes.length - 1) {
+        scheduleAutoPlay();
+      } else if (newScene === scenes.length - 1) {
+        // Last scene, stop auto-play
+        setAutoPlay(false);
+      }
+    }
+  };
+
+  // Schedule auto-play timer
+  const scheduleAutoPlay = () => {
+    // Clear existing timer
+    if (autoPlayTimerRef.current) {
+      clearTimeout(autoPlayTimerRef.current);
+    }
+
+    // Set new timer for 8 seconds
+    autoPlayTimerRef.current = setTimeout(() => {
+      nextScene();
+    }, 8000);
+  };
+
+  // Handle auto-play toggle
+  const toggleAutoPlay = () => {
+    const newAutoPlay = !autoPlay;
+    setAutoPlay(newAutoPlay);
+
+    if (newAutoPlay && currentScene < scenes.length - 1) {
+      // Start auto-play
+      scheduleAutoPlay();
+    } else {
+      // Stop auto-play
+      if (autoPlayTimerRef.current) {
+        clearTimeout(autoPlayTimerRef.current);
+        autoPlayTimerRef.current = null;
+      }
     }
   };
 
   // Switch to previous scene
   const prevScene = async () => {
     if (currentScene > 0) {
+      // Stop auto-play when manually going back
+      if (autoPlayTimerRef.current) {
+        clearTimeout(autoPlayTimerRef.current);
+        autoPlayTimerRef.current = null;
+      }
+      setAutoPlay(false);
+
       const newScene = currentScene - 1;
       setCurrentScene(newScene);
       console.log(`Switching to scene ${newScene + 1}: ${scenes[newScene].name}`);
@@ -345,6 +392,13 @@ export default function ARBPage() {
         setStatusMessage('AR session ended');
         xrSessionRef.current = null;
         hitTestSourceRef.current = null;
+
+        // Stop auto-play
+        setAutoPlay(false);
+        if (autoPlayTimerRef.current) {
+          clearTimeout(autoPlayTimerRef.current);
+          autoPlayTimerRef.current = null;
+        }
 
         // Clean up placed model
         if (placedModelRef.current) {
@@ -590,6 +644,22 @@ export default function ARBPage() {
               </div>
 
               <button
+                onClick={toggleAutoPlay}
+                style={{
+                  backgroundColor: autoPlay ? '#FFC857' : '#D4A373',
+                  color: autoPlay ? '#1B1B1E' : 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {autoPlay ? '⏸️ Pause' : '▶️ Auto'}
+              </button>
+
+              <button
                 onClick={prevScene}
                 disabled={currentScene === 0}
                 style={{
@@ -642,14 +712,21 @@ export default function ARBPage() {
               </button>
             </div>
 
-            <p style={{
+            <div style={{
               textAlign: 'center',
               fontSize: '0.85rem',
               color: '#473C8B',
-              margin: 0
+              marginTop: '0.25rem'
             }}>
-              👆 Tap screen to place {scenes[currentScene].name}
-            </p>
+              <p style={{ margin: 0, marginBottom: '0.25rem' }}>
+                👆 Tap screen to place {scenes[currentScene].name}
+              </p>
+              {autoPlay && (
+                <p style={{ margin: 0, color: '#FFC857', fontWeight: 'bold' }}>
+                  ⏱️ Auto-switching in 8 seconds...
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
