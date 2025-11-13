@@ -333,21 +333,21 @@ export default function ARDebug2Page() {
         const createSubtitleSprite = async (text = 'Loading...') => {
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
-          canvas.width = 1024;
-          canvas.height = 200;
+          canvas.width = 800;
+          canvas.height = 160;
           
           // Clear background
           context.clearRect(0, 0, canvas.width, canvas.height);
           
           // Draw semi-transparent dark background (like game subtitles)
           context.fillStyle = 'rgba(0, 0, 0, 0.85)';
-          context.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 20);
+          context.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 16);
           context.fill();
           
           // Draw border/outline
           context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-          context.lineWidth = 3;
-          context.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 20);
+          context.lineWidth = 2;
+          context.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 16);
           context.stroke();
           
           // Load and draw avatar image
@@ -361,8 +361,8 @@ export default function ARDebug2Page() {
             });
             
             // Draw circular avatar on the left
-            const avatarSize = 120;
-            const avatarX = 80;
+            const avatarSize = 90;
+            const avatarX = 65;
             const avatarY = canvas.height / 2;
             
             context.save();
@@ -382,47 +382,47 @@ export default function ARDebug2Page() {
             // If avatar fails to load, draw placeholder
             context.fillStyle = '#3B82F6';
             context.beginPath();
-            context.arc(80, canvas.height / 2, 60, 0, Math.PI * 2);
+            context.arc(65, canvas.height / 2, 45, 0, Math.PI * 2);
             context.fill();
             
             context.fillStyle = '#FFFFFF';
-            context.font = 'Bold 50px Arial';
+            context.font = 'Bold 40px Arial';
             context.textAlign = 'center';
             context.textBaseline = 'middle';
-            context.fillText('🎙️', 80, canvas.height / 2);
+            context.fillText('🎙️', 65, canvas.height / 2);
           }
           
           // Draw character name (optional)
           context.fillStyle = '#FFC857';
-          context.font = 'Bold 28px Arial';
+          context.font = 'Bold 22px Arial';
           context.textAlign = 'left';
           context.textBaseline = 'top';
-          context.fillText('Narrator', 170, 30);
+          context.fillText('Narrator', 135, 22);
           
           // Draw subtitle text (word-wrapped)
           context.fillStyle = '#FFFFFF';
-          context.font = '24px Arial';
+          context.font = '18px Arial';
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - 200;
-          const lineHeight = 32;
+          const maxWidth = canvas.width - 160;
+          const lineHeight = 24;
           const words = text.split(' ');
           let line = '';
-          let y = 70;
+          let y = 52;
           
           for (let i = 0; i < words.length; i++) {
             const testLine = line + words[i] + ' ';
             const metrics = context.measureText(testLine);
             if (metrics.width > maxWidth && i > 0) {
-              context.fillText(line, 170, y);
+              context.fillText(line, 135, y);
               line = words[i] + ' ';
               y += lineHeight;
             } else {
               line = testLine;
             }
           }
-          context.fillText(line, 170, y);
+          context.fillText(line, 135, y);
           
           const texture = new THREE.CanvasTexture(canvas);
           texture.needsUpdate = true;
@@ -434,7 +434,7 @@ export default function ARDebug2Page() {
             depthWrite: false
           });
           const sprite = new THREE.Sprite(spriteMaterial);
-          sprite.scale.set(1.2, 0.24, 1); // Wider for subtitle style
+          sprite.scale.set(0.75, 0.15, 1); // Smaller to fit screen horizontally
           return sprite;
         };
 
@@ -630,15 +630,15 @@ export default function ARDebug2Page() {
               const cameraDirection = new THREE.Vector3();
               camera.getWorldDirection(cameraDirection);
               const subtitlePosition = camera.position.clone();
-              subtitlePosition.add(cameraDirection.multiplyScalar(1.0)); // 1m in front
-              subtitlePosition.y -= 0.4; // Bottom of view (subtitle position)
+              subtitlePosition.add(cameraDirection.multiplyScalar(0.9)); // 0.9m in front
+              subtitlePosition.y -= 0.35; // Bottom of view (subtitle position)
               subtitleIndicator.position.copy(subtitlePosition);
               subtitleIndicator.lookAt(camera.position);
               
               // Gentle fade/glow animation when speaking (more subtle for subtitles)
               if (subtitleIndicator.visible) {
                 // Maintain consistent scale (no pulsing for subtitles)
-                subtitleIndicator.scale.set(1.2, 0.24, 1);
+                subtitleIndicator.scale.set(0.75, 0.15, 1);
                 // Very subtle opacity variation for "speaking" effect
                 subtitleIndicator.material.opacity = 0.92 + Math.sin(timestamp * 0.004) * 0.05;
               }
