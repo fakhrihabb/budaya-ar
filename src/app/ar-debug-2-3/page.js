@@ -29,18 +29,6 @@ export default function ARDebug2Page() {
 
   // Scenes with models and scripts
   const scenes = [
-    // 1. Apa itu Pacu Jalur & Festival
-    {
-      model: '/models/boat.glb',
-      script: 'Pacu Jalur adalah tradisi balap perahu panjang khas Kuantan Singingi, Riau. Awalnya sebagai ajang transportasi dan pengangkutan hasil bumi, kini Pacu Jalur menjadi festival budaya, hiburan rakyat, dan ajang adu cepat yang meriah.',
-      scale: 0.5
-    },
-    // 2. Sungai Batang Kuantan sebagai jalur transportasi
-    {
-      model: '/models/river.glb',
-      script: 'Pada masa lalu, sungai Batang Kuantan menjadi jalur transportasi utama masyarakat dari Hulu Kuantan hingga Cerenti.',
-      scale: 0.5
-    },
     // 3. Pengangkutan hasil bumi (buah, tebu)
     {
       model: '/models/banana.glb',
