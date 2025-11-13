@@ -269,31 +269,72 @@ export default function ARDebug2Page() {
           const centerX = canvas.width / 2;
           const centerY = canvas.height / 2;
           
-          // Draw microphone icon
-          context.strokeStyle = '#FFFFFF';
+          // Draw white circle background
           context.fillStyle = '#FFFFFF';
-          context.lineWidth = 12;
-          
-          // Mic body (rounded rectangle)
           context.beginPath();
-          context.roundRect(centerX - 30, centerY - 60, 60, 80, 30);
+          context.arc(centerX, centerY, 90, 0, Math.PI * 2);
           context.fill();
           
-          // Mic stand
+          // Add subtle shadow/glow
+          context.shadowColor = 'rgba(0, 0, 0, 0.3)';
+          context.shadowBlur = 20;
+          context.shadowOffsetX = 0;
+          context.shadowOffsetY = 5;
+          
+          // Redraw circle with shadow
           context.beginPath();
-          context.arc(centerX, centerY + 35, 35, 0, Math.PI, false);
+          context.arc(centerX, centerY, 90, 0, Math.PI * 2);
+          context.fill();
+          
+          // Reset shadow
+          context.shadowColor = 'transparent';
+          context.shadowBlur = 0;
+          context.shadowOffsetX = 0;
+          context.shadowOffsetY = 0;
+          
+          // Draw microphone icon (dark color for contrast)
+          context.strokeStyle = '#1E3A8A';
+          context.fillStyle = '#1E3A8A';
+          context.lineWidth = 10;
+          context.lineCap = 'round';
+          context.lineJoin = 'round';
+          
+          // Mic capsule (rounded rectangle)
+          context.beginPath();
+          context.roundRect(centerX - 22, centerY - 45, 44, 70, 22);
+          context.fill();
+          
+          // Horizontal lines on mic capsule for detail
+          context.strokeStyle = '#3B82F6';
+          context.lineWidth = 3;
+          for (let i = 0; i < 3; i++) {
+            const y = centerY - 30 + (i * 20);
+            context.beginPath();
+            context.moveTo(centerX - 15, y);
+            context.lineTo(centerX + 15, y);
+            context.stroke();
+          }
+          
+          // Reset style for stand
+          context.strokeStyle = '#1E3A8A';
+          context.lineWidth = 10;
+          
+          // Mic stand arc
+          context.beginPath();
+          context.arc(centerX, centerY + 25, 30, 0, Math.PI, false);
           context.stroke();
           
+          // Vertical stand line
           context.beginPath();
-          context.moveTo(centerX, centerY + 35);
-          context.lineTo(centerX, centerY + 60);
+          context.moveTo(centerX, centerY + 25);
+          context.lineTo(centerX, centerY + 55);
           context.stroke();
           
-          // Base
-          context.lineWidth = 14;
+          // Base (wider and more prominent)
+          context.lineWidth = 12;
           context.beginPath();
-          context.moveTo(centerX - 30, centerY + 60);
-          context.lineTo(centerX + 30, centerY + 60);
+          context.moveTo(centerX - 35, centerY + 55);
+          context.lineTo(centerX + 35, centerY + 55);
           context.stroke();
           
           const texture = new THREE.CanvasTexture(canvas);
@@ -305,7 +346,7 @@ export default function ARDebug2Page() {
             depthWrite: false
           });
           const sprite = new THREE.Sprite(spriteMaterial);
-          sprite.scale.set(0.15, 0.15, 1);
+          sprite.scale.set(0.2, 0.2, 1);
           return sprite;
         };
 
@@ -508,10 +549,10 @@ export default function ARDebug2Page() {
               
               // Pulsing animation when speaking
               if (micIndicator.visible) {
-                const pulseScale = 0.15 + Math.sin(timestamp * 0.008) * 0.02;
+                const pulseScale = 0.2 + Math.sin(timestamp * 0.008) * 0.025;
                 micIndicator.scale.set(pulseScale, pulseScale, 1);
                 // Pulse opacity
-                micIndicator.material.opacity = 0.85 + Math.sin(timestamp * 0.006) * 0.15;
+                micIndicator.material.opacity = 0.9 + Math.sin(timestamp * 0.006) * 0.1;
               }
             }
           }
