@@ -77,7 +77,7 @@ export default function ARPage() {
     return () => {
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     };
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentScene, isInAR]);
 
   // Stop TTS saat AR berakhir
