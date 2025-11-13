@@ -7,6 +7,7 @@ export default function ARDebug2Page() {
   const [sessionActive, setSessionActive] = useState(false);
   const [surfaceFound, setSurfaceFound] = useState(false);
   const [modelPlaced, setModelPlaced] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [logs, setLogs] = useState([]);
 
   const canvasRef = useRef(null);
@@ -248,12 +249,16 @@ export default function ARDebug2Page() {
       addLog('✅ Tap-to-place controller ready');
       
       setSessionActive(true);
+      setIsScanning(true);
+      setSurfaceFound(false);
       addLog('🎉 AR Session fully active!');
+      addLog('📡 Scanning for surfaces...');
 
       // Handle session end
       session.addEventListener('end', () => {
         addLog('🛑 AR session ended');
         setSessionActive(false);
+        setIsScanning(false);
         setSurfaceFound(false);
         setModelPlaced(false);
         xrSessionRef.current = null;
@@ -308,7 +313,7 @@ export default function ARDebug2Page() {
             zIndex: 1
           }}
         >
-          {/* Top status banner */}
+          {/* Top status banner - ALWAYS VISIBLE */}
           <div style={{
             backgroundColor: surfaceFound ? 'rgba(76, 175, 80, 0.95)' : 'rgba(255, 152, 0, 0.95)',
             color: 'white',
@@ -321,19 +326,32 @@ export default function ARDebug2Page() {
             maxWidth: '90%',
             alignSelf: 'center',
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            animation: surfaceFound ? 'none' : 'pulse 2s infinite'
+            transition: 'background-color 0.3s ease'
           }}>
             {surfaceFound ? (
               <>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
-                <div>Surface Found!</div>
-                <div style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>👆 TAP to place crocodile</div>
+                <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>✅</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: '800' }}>Surface Found!</div>
+                <div style={{ fontSize: '1rem', marginTop: '0.5rem', fontWeight: '600' }}>👆 TAP screen to place crocodile</div>
               </>
             ) : (
               <>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</div>
-                <div>Scanning for surface...</div>
-                <div style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>📱 Move device slowly</div>
+                {/* Spinning loader */}
+                <div style={{ 
+                  fontSize: '3rem', 
+                  marginBottom: '0.5rem',
+                  animation: 'spin 2s linear infinite',
+                  display: 'inline-block'
+                }}>🔄</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: '800' }}>Scanning Surface...</div>
+                <div style={{ fontSize: '1rem', marginTop: '0.5rem', fontWeight: '600' }}>📱 Move device slowly over floor/table</div>
+                <div style={{ 
+                  marginTop: '0.75rem',
+                  fontSize: '0.85rem',
+                  backgroundColor: 'rgba(0,0,0,0.3)',
+                  padding: '0.5rem',
+                  borderRadius: '8px'
+                }}>Point camera at flat surfaces</div>
               </>
             )}
           </div>
@@ -345,16 +363,19 @@ export default function ARDebug2Page() {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: 'rgba(76, 175, 80, 0.95)',
+              backgroundColor: 'rgba(76, 175, 80, 0.98)',
               color: 'white',
-              padding: '1rem 2rem',
-              borderRadius: '12px',
-              fontSize: '1.2rem',
+              padding: '2rem 3rem',
+              borderRadius: '20px',
+              fontSize: '1.5rem',
               fontWeight: 'bold',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              zIndex: 10
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              zIndex: 10,
+              border: '3px solid white',
+              animation: 'popIn 0.3s ease-out'
             }}>
-              🦎 Crocodile Placed!
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🦎</div>
+              <div>Crocodile Placed!</div>
             </div>
           )}
 
@@ -520,9 +541,14 @@ export default function ARDebug2Page() {
       )}
 
       <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes popIn {
+          0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+          50% { transform: translate(-50%, -50%) scale(1.1); }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
       `}</style>
     </div>
