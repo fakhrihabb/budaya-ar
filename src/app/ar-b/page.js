@@ -21,7 +21,6 @@ export default function ARBPage() {
   const speechSynthesisRef = useRef(null);
   const autoPlayTimerRef = useRef(null);
   const autoPlayRef = useRef(false); // Ref to track autoPlay state for callbacks
-  const currentSceneRef = useRef(0); // Ref to track current scene for callbacks
 
   const addLog = (message) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -265,16 +264,10 @@ export default function ARBPage() {
 
   // Switch to next scene
   const nextScene = async () => {
-    const currentSceneValue = currentSceneRef.current;
-    addLog(`🔍 Current scene before switch: ${currentSceneValue}`);
-
-    if (currentSceneValue < scenes.length - 1) {
-      const newScene = currentSceneValue + 1;
+    if (currentScene < scenes.length - 1) {
+      const newScene = currentScene + 1;
       addLog(`➡️ Switching to scene ${newScene + 1}: ${scenes[newScene].name}`);
-
-      // Update both state and ref
       setCurrentScene(newScene);
-      currentSceneRef.current = newScene;
 
       // Load new model if in AR
       if (sessionActive && rendererRef.current) {
@@ -342,9 +335,7 @@ export default function ARBPage() {
 
   // Switch to previous scene
   const prevScene = async () => {
-    const currentSceneValue = currentSceneRef.current;
-
-    if (currentSceneValue > 0) {
+    if (currentScene > 0) {
       // Stop auto-play when manually going back
       if (autoPlayTimerRef.current) {
         clearTimeout(autoPlayTimerRef.current);
@@ -353,43 +344,37 @@ export default function ARBPage() {
       setAutoPlay(false);
       autoPlayRef.current = false; // Sync ref
 
-      const newScene = currentSceneValue - 1;
-      addLog(`⬅️ Switching to scene ${newScene + 1}: ${scenes[newScene].name}`);
-
-      // Update both state and ref
+      const newScene = currentScene - 1;
       setCurrentScene(newScene);
-      currentSceneRef.current = newScene;
+      console.log(`⬅️ Switching to scene ${newScene + 1}: ${scenes[newScene].name}`);
 
       // Load new model if in AR
       if (sessionActive && rendererRef.current) {
         try {
-          addLog(`📦 Loading model for ${scenes[newScene].name}...`);
+          console.log(`📦 Loading model for ${scenes[newScene].name}...`);
           const model = await loadModelForScene(newScene);
           rendererRef.current.loadedModel = model;
-          addLog(`✅ Model loaded`);
+          console.log(`✅ Model loaded`);
 
           // If there's already a placed model, automatically replace it
-          if (placedModelRef.current) {
-            addLog('🔄 Auto-replacing placed model...');
-
-            // Save old position
-            const oldPosition = placedModelRef.current.position.clone();
+          if (placedModelRef.current && reticleRef.current) {
+            console.log('🔄 Auto-replacing placed model...');
 
             // Remove old model
             rendererRef.current.scene.remove(placedModelRef.current);
 
             // Place new model at same position as old one
             const newPlacedModel = model.clone();
-            newPlacedModel.position.copy(oldPosition);
+            newPlacedModel.position.copy(placedModelRef.current.position);
             rendererRef.current.scene.add(newPlacedModel);
             placedModelRef.current = newPlacedModel;
 
-            addLog(`✅ Model auto-replaced with ${scenes[newScene].name}`);
+            console.log(`✅ Model auto-replaced with ${scenes[newScene].name}`);
           } else {
-            addLog(`✅ Model ready to place (tap screen)`);
+            console.log(`✅ Model ready to place (tap screen)`);
           }
         } catch (e) {
-          addLog(`❌ Failed to load ${scenes[newScene].name}: ${e.message}`);
+          console.error(`❌ Failed to load ${scenes[newScene].name}:`, e);
         }
       }
 
@@ -459,9 +444,6 @@ export default function ARBPage() {
 
         const reticle = reticleRef.current;
         const model = rendererRef.current.loadedModel;
-        const sceneIndex = currentSceneRef.current; // Use ref instead of state
-
-        addLog(`📍 Current scene index: ${sceneIndex}`);
 
         if (!reticle || !reticle.visible) {
           addLog('⚠️ No surface detected. Move your device to find a surface.');
@@ -484,7 +466,7 @@ export default function ARBPage() {
         newModel.position.setFromMatrixPosition(reticle.matrix);
         rendererRef.current.scene.add(newModel);
         placedModelRef.current = newModel;
-        addLog(`✅ ${scenes[sceneIndex].name} placed at (${newModel.position.x.toFixed(2)}, ${newModel.position.y.toFixed(2)}, ${newModel.position.z.toFixed(2)})`);
+        addLog(`✅ ${scenes[currentScene].name} placed at (${newModel.position.x.toFixed(2)}, ${newModel.position.y.toFixed(2)}, ${newModel.position.z.toFixed(2)})`);
       });
       controllerRef.current = controller;
       rendererRef.current.scene.add(controller);
