@@ -222,7 +222,26 @@ function ARExperienceCard({ experience }) {
 
   return (
     <Link href={`/ar/${experience.id}`} className="block group">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02] hover:shadow-lg">
+      <div className="relative rounded-2xl overflow-hidden transition-all cursor-pointer" style={{
+        background: 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(20px)',
+        border: '2px solid rgba(138, 127, 216, 0.25)',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.boxShadow = '0 8px 32px rgba(138, 127, 216, 0.25)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.06)';
+      }}
+      >
+        {/* Hover glow effect */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{
+          background: 'radial-gradient(circle at center, rgba(138, 127, 216, 0.15), transparent 70%)'
+        }} />
+
         {/* Thumbnail */}
         <div className="relative w-full aspect-square">
           <Image
@@ -231,10 +250,14 @@ function ARExperienceCard({ experience }) {
             fill
             className="object-cover"
           />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent)'
+          }} />
         </div>
 
         {/* Content */}
-        <div className="p-3">
+        <div className="p-3 relative z-10">
           {/* User Info */}
           <div className="flex items-center gap-2 mb-2">
             <Image
@@ -243,29 +266,40 @@ function ARExperienceCard({ experience }) {
               width={24}
               height={24}
               className="rounded-full"
+              style={{
+                border: '2px solid rgba(138, 127, 216, 0.3)',
+                boxShadow: '0 0 8px rgba(138, 127, 216, 0.2)'
+              }}
             />
-            <p className="text-xs font-medium text-gray-700">@{experience.user.username}</p>
+            <p className="text-xs font-medium" style={{ color: '#6B5FBD' }}>@{experience.user.username}</p>
           </div>
 
           {/* Title */}
-          <h3 className="font-bold text-sm text-gray-900 mb-1 line-clamp-1">
+          <h3 className="font-bold text-sm mb-1 line-clamp-1" style={{
+            color: '#1B1B1E',
+            textShadow: '0 0 10px rgba(138, 127, 216, 0.15)'
+          }}>
             {experience.title}
           </h3>
 
           {/* Short Description */}
-          <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+          <p className="text-xs mb-3 line-clamp-2" style={{ color: '#8B7355' }}>
             {experience.shortDescription}
           </p>
 
           {/* Favorite Button */}
           <button 
             onClick={toggleLike}
-            className="flex items-center gap-1 transition-colors"
+            className="flex items-center gap-1 transition-all"
+            style={{
+              color: isLiked ? '#ef4444' : '#6B7280',
+              filter: isLiked ? 'drop-shadow(0 0 5px rgba(239, 68, 68, 0.4))' : 'none'
+            }}
           >
             <Heart 
-              className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+              className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`}
             />
-            <span className="text-sm font-semibold text-gray-700">{likes}</span>
+            <span className="text-sm font-semibold">{likes}</span>
           </button>
         </div>
       </div>
@@ -290,7 +324,26 @@ function StorybookCard({ story }) {
 
   return (
     <Link href="/storybook/my/0debe010-4dfc-452b-bdce-caaca077d3c0" className="block group">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02] hover:shadow-lg">
+      <div className="relative rounded-2xl overflow-hidden transition-all cursor-pointer" style={{
+        background: 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(20px)',
+        border: '2px solid rgba(212, 163, 115, 0.25)',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.boxShadow = '0 8px 32px rgba(212, 163, 115, 0.25)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.06)';
+      }}
+      >
+        {/* Hover glow effect */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{
+          background: 'radial-gradient(circle at center, rgba(212, 163, 115, 0.15), transparent 70%)'
+        }} />
+
         {/* Thumbnail */}
         <div className="relative w-full aspect-square">
           <Image
@@ -299,10 +352,14 @@ function StorybookCard({ story }) {
             fill
             className="object-cover"
           />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent)'
+          }} />
         </div>
 
         {/* Content */}
-        <div className="p-3">
+        <div className="p-3 relative z-10">
           {/* User Info */}
           <div className="flex items-center gap-2 mb-2">
             <Image
@@ -311,29 +368,40 @@ function StorybookCard({ story }) {
               width={24}
               height={24}
               className="rounded-full"
+              style={{
+                border: '2px solid rgba(212, 163, 115, 0.3)',
+                boxShadow: '0 0 8px rgba(212, 163, 115, 0.2)'
+              }}
             />
-            <p className="text-xs font-medium text-gray-700">@{story.user.username}</p>
+            <p className="text-xs font-medium" style={{ color: '#D4A373' }}>@{story.user.username}</p>
           </div>
 
           {/* Title */}
-          <h3 className="font-bold text-sm text-gray-900 mb-1 line-clamp-1">
+          <h3 className="font-bold text-sm mb-1 line-clamp-1" style={{
+            color: '#1B1B1E',
+            textShadow: '0 0 10px rgba(212, 163, 115, 0.15)'
+          }}>
             {story.title}
           </h3>
 
           {/* Short Description */}
-          <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+          <p className="text-xs mb-3 line-clamp-2" style={{ color: '#8B7355' }}>
             {story.shortDescription}
           </p>
 
           {/* Favorite Button */}
           <button 
             onClick={toggleLike}
-            className="flex items-center gap-1 transition-colors"
+            className="flex items-center gap-1 transition-all"
+            style={{
+              color: isLiked ? '#ef4444' : '#6B7280',
+              filter: isLiked ? 'drop-shadow(0 0 5px rgba(239, 68, 68, 0.4))' : 'none'
+            }}
           >
             <Heart 
-              className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+              className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`}
             />
-            <span className="text-sm font-semibold text-gray-700">{likes}</span>
+            <span className="text-sm font-semibold">{likes}</span>
           </button>
         </div>
       </div>
@@ -361,63 +429,140 @@ export default function GaleriPage() {
   const currentData = activeTab === 'ar' ? filteredARExperiences : filteredStorybooks;
 
   return (
-    <div className="min-h-screen" style={{backgroundColor: '#F8F5F2'}}>
+    <div className="min-h-screen relative overflow-hidden" style={{
+      background: 'linear-gradient(135deg, #ffffff 0%, #f8f5ff 50%, #fff9f5 100%)'
+    }}>
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Floating Orbs */}
+        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-30" style={{
+          background: 'radial-gradient(circle, rgba(138, 127, 216, 0.3), transparent 70%)',
+          animation: 'float 8s ease-in-out infinite',
+          filter: 'blur(40px)'
+        }} />
+        <div className="absolute bottom-40 right-10 w-80 h-80 rounded-full opacity-30" style={{
+          background: 'radial-gradient(circle, rgba(212, 163, 115, 0.3), transparent 70%)',
+          animation: 'float 10s ease-in-out infinite reverse',
+          filter: 'blur(40px)'
+        }} />
+        <div className="absolute top-1/2 left-1/3 w-72 h-72 rounded-full opacity-20" style={{
+          background: 'radial-gradient(circle, rgba(255, 200, 87, 0.25), transparent 70%)',
+          animation: 'float 12s ease-in-out infinite',
+          filter: 'blur(50px)'
+        }} />
+
+        {/* Animated Grid */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'linear-gradient(#473C8B 1px, transparent 1px), linear-gradient(90deg, #473C8B 1px, transparent 1px)',
+          backgroundSize: '50px 50px',
+          animation: 'gridMove 20s linear infinite'
+        }} />
+      </div>
+
       {/* Header with Search and Tabs */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+      <header className="sticky top-0 z-10" style={{
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '2px solid rgba(138, 127, 216, 0.2)',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)'
+      }}>
         <div className="max-w-4xl mx-auto px-4 py-4">
           {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{color: '#473C8B'}} />
+          <div className="relative mb-4 rounded-2xl overflow-hidden" style={{
+            background: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(20px)',
+            border: '2px solid rgba(138, 127, 216, 0.3)',
+            boxShadow: '0 0 20px rgba(138, 127, 216, 0.15)'
+          }}>
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{
+              color: '#473C8B',
+              filter: 'drop-shadow(0 0 5px rgba(138, 127, 216, 0.4))'
+            }} />
             <input
               type="text"
               placeholder="Cari pengalaman AR atau cerita..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-full focus:outline-none focus:ring-2 transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-transparent focus:outline-none"
               style={{
-                borderColor: '#D4A373',
-                color: '#1B1B1E',
-                backgroundColor: '#FFFFFF'
+                color: '#1B1B1E'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#473C8B'}
-              onBlur={(e) => e.target.style.borderColor = '#D4A373'}
             />
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               onClick={() => setActiveTab('ar')}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
-                activeTab === 'ar'
-                  ? 'text-white shadow-md'
-                  : 'text-gray-600 hover:bg-gray-200'
-              }`}
-              style={activeTab === 'ar' ? {backgroundColor: '#473C8B'} : {backgroundColor: '#F0F0F0'}}
+              className="relative flex-1 py-3 px-4 rounded-2xl font-semibold transition-all overflow-hidden group"
+              style={{
+                background: activeTab === 'ar'
+                  ? 'linear-gradient(135deg, #473C8B 0%, #6B5FBD 100%)'
+                  : 'rgba(255, 255, 255, 0.6)',
+                color: activeTab === 'ar' ? 'white' : '#1B1B1E',
+                border: `2px solid ${activeTab === 'ar' ? 'rgba(138, 127, 216, 0.4)' : 'rgba(138, 127, 216, 0.25)'}`,
+                boxShadow: activeTab === 'ar'
+                  ? '0 0 30px rgba(138, 127, 216, 0.3)'
+                  : '0 0 15px rgba(138, 127, 216, 0.15)',
+                backdropFilter: 'blur(10px)',
+                textShadow: activeTab === 'ar' ? '0 0 10px rgba(255, 255, 255, 0.5)' : 'none'
+              }}
             >
-              AR Experience
+              {activeTab === 'ar' && (
+                <div className="absolute inset-0 opacity-30" style={{
+                  background: 'linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                  animation: 'shimmer 2s infinite'
+                }} />
+              )}
+              <span className="relative z-10">AR Experience</span>
             </button>
             <button
               onClick={() => setActiveTab('storybook')}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
-                activeTab === 'storybook'
-                  ? 'text-white shadow-md'
-                  : 'text-gray-600 hover:bg-gray-200'
-              }`}
-              style={activeTab === 'storybook' ? {backgroundColor: '#473C8B'} : {backgroundColor: '#F0F0F0'}}
+              className="relative flex-1 py-3 px-4 rounded-2xl font-semibold transition-all overflow-hidden group"
+              style={{
+                background: activeTab === 'storybook'
+                  ? 'linear-gradient(135deg, #473C8B 0%, #6B5FBD 100%)'
+                  : 'rgba(255, 255, 255, 0.6)',
+                color: activeTab === 'storybook' ? 'white' : '#1B1B1E',
+                border: `2px solid ${activeTab === 'storybook' ? 'rgba(138, 127, 216, 0.4)' : 'rgba(138, 127, 216, 0.25)'}`,
+                boxShadow: activeTab === 'storybook'
+                  ? '0 0 30px rgba(138, 127, 216, 0.3)'
+                  : '0 0 15px rgba(138, 127, 216, 0.15)',
+                backdropFilter: 'blur(10px)',
+                textShadow: activeTab === 'storybook' ? '0 0 10px rgba(255, 255, 255, 0.5)' : 'none'
+              }}
             >
-              Buku Cerita
+              {activeTab === 'storybook' && (
+                <div className="absolute inset-0 opacity-30" style={{
+                  background: 'linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                  animation: 'shimmer 2s infinite'
+                }} />
+              )}
+              <span className="relative z-10">Buku Cerita</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Grid Feed */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6 relative z-10">
         {currentData.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-lg" style={{color: '#1B1B1E'}}>Tidak ada hasil ditemukan</p>
-            <p className="text-sm mt-2" style={{color: '#473C8B'}}>Coba kata kunci lain</p>
+          <div className="text-center py-12 relative rounded-3xl overflow-hidden" style={{
+            background: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(20px)',
+            border: '2px solid rgba(138, 127, 216, 0.25)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+          }}>
+            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{
+              background: 'radial-gradient(circle at center, rgba(138, 127, 216, 0.2), transparent 70%)'
+            }} />
+            <p className="text-lg font-bold relative z-10" style={{
+              color: '#1B1B1E',
+              textShadow: '0 0 15px rgba(138, 127, 216, 0.2)'
+            }}>Tidak ada hasil ditemukan</p>
+            <p className="text-sm mt-2 relative z-10" style={{
+              color: '#6B5FBD'
+            }}>Coba kata kunci lain</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
@@ -435,6 +580,39 @@ export default function GaleriPage() {
 
       {/* Bottom Navigation Spacer */}
       <div className="h-20"></div>
+
+      {/* Animations */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0) translateX(0);
+          }
+          33% {
+            transform: translateY(-20px) translateX(10px);
+          }
+          66% {
+            transform: translateY(-10px) translateX(-10px);
+          }
+        }
+
+        @keyframes gridMove {
+          0% {
+            transform: translateY(0);
+          }
+          100% {
+            transform: translateY(50px);
+          }
+        }
+
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+      `}</style>
     </div>
   );
 }
