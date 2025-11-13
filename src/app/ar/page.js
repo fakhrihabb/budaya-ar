@@ -1,32 +1,3 @@
-  // --- TTS Indonesia ---
-  const speakIndo = (text) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel(); // stop previous
-    const utter = new window.SpeechSynthesisUtterance(text);
-    utter.lang = 'id-ID';
-    utter.rate = 1;
-    utter.pitch = 1;
-    utter.volume = 1;
-    window.speechSynthesis.speak(utter);
-  };
-
-  // TTS: Baca script setiap kali currentScene berubah
-  useEffect(() => {
-    if (!isInAR) return;
-    speakIndo(scenes[currentScene].script);
-    return () => {
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-    };
-    // eslint-disable-next-line
-  }, [currentScene, isInAR]);
-
-  // Stop TTS saat AR berakhir
-  useEffect(() => {
-    if (!isInAR && typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-  }, [isInAR]);
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 
@@ -86,6 +57,35 @@ export default function ARPage() {
       scale: 0.5
     }
   ];
+
+  // --- TTS Indonesia ---
+  const speakIndo = (text) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel(); // stop previous
+    const utter = new window.SpeechSynthesisUtterance(text);
+    utter.lang = 'id-ID';
+    utter.rate = 1;
+    utter.pitch = 1;
+    utter.volume = 1;
+    window.speechSynthesis.speak(utter);
+  };
+
+  // TTS: Baca script setiap kali currentScene berubah
+  useEffect(() => {
+    if (!isInAR) return;
+    speakIndo(scenes[currentScene].script);
+    return () => {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    };
+    // eslint-disable-next-line
+  }, [currentScene, isInAR]);
+
+  // Stop TTS saat AR berakhir
+  useEffect(() => {
+    if (!isInAR && typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, [isInAR]);
 
   // Check WebXR support
   useEffect(() => {
