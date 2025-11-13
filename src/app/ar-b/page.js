@@ -25,7 +25,7 @@ export default function ARBPage() {
   const addLog = (message) => {
     const timestamp = new Date().toLocaleTimeString();
     const logMessage = `[${timestamp}] ${message}`;
-    setLogs(prev => [...prev.slice(-20), logMessage]); // Keep last 20 logs
+    setLogs(prev => [...prev, logMessage]); // Keep all logs
     console.log(message);
   };
 
@@ -670,14 +670,34 @@ export default function ARBPage() {
               </div>
 
               {/* Console Logs */}
-              <div className="rounded-3xl p-6" style={{backgroundColor: 'rgba(0, 0, 0, 0.9)', border: '2px solid #4CAF50'}}>
-                <h3 className="font-bold text-lg mb-3" style={{color: '#00ff00'}}>📋 Console Logs:</h3>
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <div className="rounded-3xl p-6" style={{backgroundColor: 'rgba(0, 0, 0, 0.95)', border: '3px solid #4CAF50'}}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3 className="font-bold text-xl" style={{color: '#00ff00'}}>📋 Console Logs</h3>
+                  <div style={{ color: '#00ff00', fontSize: '0.9rem', fontFamily: 'monospace' }}>
+                    Total: {logs.length} logs
+                  </div>
+                </div>
+                <div style={{
+                  maxHeight: '500px',
+                  overflowY: 'auto',
+                  backgroundColor: '#000',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  border: '1px solid #00ff00'
+                }}>
                   {logs.length === 0 ? (
                     <div style={{ color: '#888', fontSize: '0.9rem' }}>No logs yet...</div>
                   ) : (
                     logs.map((log, index) => (
-                      <div key={index} style={{ color: '#00ff00', fontSize: '0.85rem', fontFamily: 'monospace', marginBottom: '0.25rem' }}>
+                      <div key={index} style={{
+                        color: '#00ff00',
+                        fontSize: '0.85rem',
+                        fontFamily: 'monospace',
+                        marginBottom: '0.5rem',
+                        lineHeight: '1.4',
+                        paddingBottom: '0.5rem',
+                        borderBottom: index < logs.length - 1 ? '1px solid rgba(0, 255, 0, 0.1)' : 'none'
+                      }}>
                         {log}
                       </div>
                     ))
@@ -838,22 +858,40 @@ export default function ARBPage() {
             {/* Debug Console Log */}
             <div style={{
               marginTop: '1rem',
-              backgroundColor: '#1B1B1E',
-              borderRadius: '8px',
-              padding: '0.75rem',
-              maxHeight: '200px',
+              backgroundColor: '#000',
+              borderRadius: '12px',
+              padding: '1rem',
+              maxHeight: '350px',
               overflowY: 'auto',
-              fontSize: '0.7rem',
-              fontFamily: 'monospace'
+              fontSize: '0.75rem',
+              fontFamily: 'monospace',
+              border: '2px solid #4CAF50'
             }}>
-              <div style={{ color: '#4CAF50', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                📋 Debug Console:
+              <div style={{
+                color: '#4CAF50',
+                marginBottom: '0.75rem',
+                fontWeight: 'bold',
+                fontSize: '0.9rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingBottom: '0.5rem',
+                borderBottom: '2px solid #4CAF50'
+              }}>
+                <span>📋 Debug Console</span>
+                <span style={{ fontSize: '0.7rem' }}>Total: {logs.length}</span>
               </div>
               {logs.length === 0 ? (
-                <div style={{ color: '#888', fontSize: '0.65rem' }}>No logs yet...</div>
+                <div style={{ color: '#888', fontSize: '0.7rem' }}>No logs yet...</div>
               ) : (
-                logs.slice(-10).map((log, index) => (
-                  <div key={index} style={{ color: '#4CAF50', marginBottom: '0.25rem', lineHeight: '1.3' }}>
+                logs.map((log, index) => (
+                  <div key={index} style={{
+                    color: '#4CAF50',
+                    marginBottom: '0.5rem',
+                    lineHeight: '1.4',
+                    paddingBottom: '0.5rem',
+                    borderBottom: index < logs.length - 1 ? '1px solid rgba(76, 175, 80, 0.2)' : 'none'
+                  }}>
                     {log}
                   </div>
                 ))
