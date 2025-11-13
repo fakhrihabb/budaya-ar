@@ -240,7 +240,25 @@ export default function ARBPage() {
           console.log(`📦 Loading model for ${scenes[newScene].name}...`);
           const model = await loadModelForScene(newScene);
           rendererRef.current.loadedModel = model;
-          console.log(`✅ Model loaded and ready to place`);
+          console.log(`✅ Model loaded`);
+
+          // If there's already a placed model, automatically replace it
+          if (placedModelRef.current && reticleRef.current) {
+            console.log('🔄 Auto-replacing placed model...');
+
+            // Remove old model
+            rendererRef.current.scene.remove(placedModelRef.current);
+
+            // Place new model at same position as old one
+            const newPlacedModel = model.clone();
+            newPlacedModel.position.copy(placedModelRef.current.position);
+            rendererRef.current.scene.add(newPlacedModel);
+            placedModelRef.current = newPlacedModel;
+
+            console.log(`✅ Model auto-replaced with ${scenes[newScene].name}`);
+          } else {
+            console.log(`✅ Model ready to place (tap screen)`);
+          }
         } catch (e) {
           console.error(`❌ Failed to load ${scenes[newScene].name}:`, e);
         }
@@ -306,7 +324,25 @@ export default function ARBPage() {
           console.log(`📦 Loading model for ${scenes[newScene].name}...`);
           const model = await loadModelForScene(newScene);
           rendererRef.current.loadedModel = model;
-          console.log(`✅ Model loaded and ready to place`);
+          console.log(`✅ Model loaded`);
+
+          // If there's already a placed model, automatically replace it
+          if (placedModelRef.current && reticleRef.current) {
+            console.log('🔄 Auto-replacing placed model...');
+
+            // Remove old model
+            rendererRef.current.scene.remove(placedModelRef.current);
+
+            // Place new model at same position as old one
+            const newPlacedModel = model.clone();
+            newPlacedModel.position.copy(placedModelRef.current.position);
+            rendererRef.current.scene.add(newPlacedModel);
+            placedModelRef.current = newPlacedModel;
+
+            console.log(`✅ Model auto-replaced with ${scenes[newScene].name}`);
+          } else {
+            console.log(`✅ Model ready to place (tap screen)`);
+          }
         } catch (e) {
           console.error(`❌ Failed to load ${scenes[newScene].name}:`, e);
         }
