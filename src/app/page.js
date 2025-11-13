@@ -4,51 +4,34 @@ import { Camera, Mic2, Film, Volume2, MapPin, CheckCircle2, Zap, Users } from 'l
 
 export default function Home() {
   return (
-    <div className="min-h-screen" style={{backgroundColor: '#F8F5F2'}}>
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full backdrop-blur-md z-50 border-b" style={{backgroundColor: 'rgba(248, 245, 242, 0.95)', borderColor: '#D4A373'}}>
-        <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src="/1.svg" alt="Lelana Logo" className="h-10" />
-            </div>
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm font-medium transition" style={{color: '#473C8B', hover: '#D4A373'}}>Fitur</a>
-              <a href="#how-it-works" className="text-sm font-medium transition" style={{color: '#473C8B', hover: '#D4A373'}}>Cara Kerja</a>
-              <a href="#about" className="text-sm font-medium transition" style={{color: '#473C8B', hover: '#D4A373'}}>Tentang</a>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <div className="min-h-screen pb-20" style={{backgroundColor: '#F8F5F2'}}>
       {/* Hero Section */}
-      <section className="w-full h-screen px-4 sm:px-6 lg:px-0 flex items-center justify-center">
-        <div className="w-full max-w-none px-4 sm:px-8 lg:px-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 items-center">
-            {/* Left Content */}
-            <div className="space-y-8">
-              <h1 className="text-5xl sm:text-6xl lg:text-xl xl:text-2xl font-bold leading-tight" style={{color: '#1B1B1E'}}>
-                Jelajahi Budaya dengan <img src="/1.svg" alt="Lelana Logo" className="inline h-24 sm:h-32 lg:h-40 xl:h-48" />
-              </h1>
-
-              <p className="text-lg sm:text-xl leading-relaxed max-w-xl" style={{color: '#1B1B1E'}}>
-                Perjalanan budaya interaktif yang menghidupkan cerita, artefak, dan tradisi melalui kekuatan AR, AI, dan teknologi 3D.
-              </p>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-8">
-                <button className="px-8 py-4 sm:py-5 text-white font-semibold rounded-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-base sm:text-lg" style={{backgroundColor: '#473C8B'}}>
-                  Mulai Perjalanan
-                </button>
-                <button className="px-8 py-4 sm:py-5 font-semibold rounded-lg border-2 transition-all duration-300 text-base sm:text-lg" style={{color: '#473C8B', borderColor: '#D4A373', backgroundColor: 'transparent'}}>
-                  Pelajari Lebih Lanjut
-                </button>
-              </div>
+      <section className="w-full min-h-screen px-4 py-8 sm:px-6 flex items-center justify-center">
+        <div className="w-full max-w-xl mx-auto">
+          <div className="flex flex-col items-center text-center space-y-6">
+            {/* Logo */}
+            <div className="flex justify-center -mb-4">
+              <img src="/2.svg" alt="Lelana Icon" className="w-48 h-48 sm:w-64 sm:h-64" />
             </div>
 
-            {/* Right Illustration - Logo Icon */}
-            <div className="hidden lg:flex justify-center">
-              <img src="/2.svg" alt="Lelana Icon" className="w-full max-w-md h-auto" />
+            {/* Title */}
+            <h1 className="text-4xl sm:text-5xl font-bold leading-tight flex justify-center -my-4">
+              <img src="/1.svg" alt="Lelana Logo" className="h-40 sm:h-48" />
+            </h1>
+
+            {/* Description */}
+            <p className="text-base sm:text-lg leading-relaxed" style={{color: '#1B1B1E'}}>
+              Perjalanan budaya interaktif yang menghidupkan cerita, artefak, dan tradisi melalui kekuatan AR, AI, dan teknologi 3D.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col w-full gap-4 pt-2">
+              <button className="w-full px-8 py-4 text-white font-semibold rounded-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-base" style={{backgroundColor: '#473C8B'}}>
+                Mulai Perjalanan
+              </button>
+              <button className="w-full px-8 py-4 font-semibold rounded-lg border-2 transition-all duration-300 text-base" style={{color: '#473C8B', borderColor: '#D4A373', backgroundColor: 'transparent'}}>
+                Pelajari Lebih Lanjut
+              </button>
             </div>
           </div>
         </div>
@@ -73,7 +56,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8">
             {/* Feature Card 1 */}
             <div className="p-6 sm:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/60 backdrop-blur-sm" style={{backgroundColor: 'rgba(212, 163, 115, 0.15)', borderColor: '#D4A373'}}>
               <div className="w-14 h-14 rounded-xl flex items-center justify-center text-white mb-4" style={{backgroundColor: '#D4A373'}}>
@@ -131,7 +114,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8">
             {/* Step 1 */}
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg" style={{backgroundColor: '#D4A373'}}>
@@ -222,7 +205,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 border-t" style={{borderColor: '#D4A373', backgroundColor: 'white'}}>
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-2 gap-8 mb-12">
             {/* Brand */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">

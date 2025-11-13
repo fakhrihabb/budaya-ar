@@ -449,22 +449,7 @@ export default function ARPage() {
         {/* Regular UI */}
         {!isInAR && (
           <>
-            <nav className="fixed top-0 w-full backdrop-blur-md z-50 border-b" style={{backgroundColor: 'rgba(248, 245, 242, 0.95)', borderColor: '#D4A373'}}>
-              <div className="px-4 sm:px-6 lg:px-8 py-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img src="/1.svg" alt="Lelana Logo" className="h-10" />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <a href="/" className="text-sm font-medium transition" style={{color: '#473C8B'}}>
-                      ← Kembali ke Home
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </nav>
-
-            <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-16">
+            <div className="pt-8 px-4 sm:px-6 lg:px-8 pb-24">
               <div className="max-w-7xl mx-auto">
                 <div className="text-center space-y-4 mb-12">
                   <h1 className="text-4xl sm:text-5xl font-bold" style={{color: '#1B1B1E'}}>
