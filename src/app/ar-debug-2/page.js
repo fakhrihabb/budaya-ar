@@ -8,6 +8,8 @@ export default function ARDebug2Page() {
   const [surfaceFound, setSurfaceFound] = useState(false);
   const [modelPlaced, setModelPlaced] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [currentScene, setCurrentScene] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [logs, setLogs] = useState([]);
 
   const canvasRef = useRef(null);
@@ -19,12 +21,87 @@ export default function ARDebug2Page() {
   const statusIndicatorRef = useRef(null);
   const textSpriteRef = useRef(null);
   const successTimerRef = useRef(null);
+  const speechSynthesisRef = useRef(null);
+  const autoPlayTimerRef = useRef(null);
+  const currentSceneRef = useRef(0);
+  const hasSpokenRef = useRef(false);
+
+  // Scenes with models and scripts
+  const scenes = [
+    {
+      model: '/models/cartoon_crocodile_croco-roco.glb',
+      script: 'In ancient Indonesian waters, crocodiles were revered as sacred creatures, symbolizing strength and protection.',
+      scale: 0.3,
+      name: 'Sacred Crocodile'
+    },
+    {
+      model: '/models/banana.glb',
+      script: 'Bananas have been cultivated in Indonesia for thousands of years as a staple food, providing nutrition to generations.',
+      scale: 0.5,
+      name: 'Ancient Banana'
+    }
+  ];
 
   const addLog = (message) => {
     const timestamp = new Date().toLocaleTimeString();
     const logMsg = `[${timestamp}] ${message}`;
     setLogs(prev => [...prev, logMsg]);
     console.log(logMsg);
+  };
+
+  // Text-to-speech function with auto scene advance
+  const speakText = (text, sceneIndex) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      addLog('⚠️ Speech synthesis not supported');
+      return;
+    }
+
+    addLog(`🔊 Starting speech for scene ${sceneIndex + 1}: ${scenes[sceneIndex].name}`);
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      addLog(`✅ Speech started for scene ${sceneIndex + 1}`);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      addLog(`🔇 Speech ended for scene ${sceneIndex + 1}`);
+
+      // Check if there's a next scene
+      if (sceneIndex < scenes.length - 1) {
+        addLog('✅ Scheduling next scene in 3 seconds...');
+
+        // Clear any existing timer
+        if (autoPlayTimerRef.current) {
+          clearTimeout(autoPlayTimerRef.current);
+        }
+
+        // Schedule next scene
+        autoPlayTimerRef.current = setTimeout(() => {
+          addLog('⏰ Timer fired! Switching to next scene...');
+          nextScene();
+        }, 3000);
+      } else {
+        // Last scene
+        addLog('📍 Last scene reached - all stories complete!');
+      }
+    };
+
+    utterance.onerror = (event) => {
+      setIsSpeaking(false);
+      addLog('❌ Speech error: ' + event.error);
+    };
+
+    speechSynthesisRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
   };
 
   // Check WebXR support
@@ -324,26 +401,15 @@ export default function ARDebug2Page() {
       hitTestSourceRef.current = hitTestSource;
       addLog('✅ Hit-test ready - start scanning!');
 
-      // Load 3D model
-      addLog('🦎 Loading crocodile model...');
-      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
-      const loader = new GLTFLoader();
-      const modelUrl = window.location.origin + '/models/cartoon_crocodile_croco-roco.glb';
-      
-      loader.load(
-        modelUrl,
-        (gltf) => {
-          const model = gltf.scene;
-          model.scale.set(0.3, 0.3, 0.3);
-          rendererRef.current.loadedModel = model;
-          addLog('✅ Crocodile model loaded!');
-        },
-        undefined,
-        (error) => {
-          addLog(`❌ Model load error: ${error.message}`);
-          console.error('Error loading model:', error);
-        }
-      );
+      // Load initial model (first scene)
+      addLog(`📦 Loading initial model: ${scenes[currentScene].name}...`);
+      try {
+        const model = await loadModelForScene(currentScene);
+        rendererRef.current.loadedModel = model;
+        addLog(`✅ ${scenes[currentScene].name} ready! Tap screen to place it`);
+      } catch (e) {
+        addLog(`❌ Failed to load initial model: ${e.message}`);
+      }
 
       // Set up tap-to-place
       const controller = rendererRef.current.renderer.xr.getController(0);
@@ -362,6 +428,9 @@ export default function ARDebug2Page() {
           return;
         }
         
+        // Check if this is first placement
+        const isFirstPlacement = !placedModelRef.current;
+        
         // Remove previous model
         if (placedModelRef.current) {
           rendererRef.current.scene.remove(placedModelRef.current);
@@ -373,11 +442,19 @@ export default function ARDebug2Page() {
         newModel.position.setFromMatrixPosition(reticle.matrix);
         rendererRef.current.scene.add(newModel);
         placedModelRef.current = newModel;
-        addLog('✅ Crocodile placed!');
+        const sceneName = scenes[currentSceneRef.current].name;
+        addLog(`✅ ${sceneName} placed at (${newModel.position.x.toFixed(2)}, ${newModel.position.y.toFixed(2)}, ${newModel.position.z.toFixed(2)})`);
         setModelPlaced(true);
         
         // Hide confirmation after 2 seconds
         setTimeout(() => setModelPlaced(false), 2000);
+        
+        // Start speech on first placement only
+        if (isFirstPlacement && !hasSpokenRef.current) {
+          hasSpokenRef.current = true;
+          addLog('🎤 Starting narration sequence...');
+          speakText(scenes[currentSceneRef.current].script, currentSceneRef.current);
+        }
       });
       rendererRef.current.scene.add(controller);
       addLog('✅ Tap-to-place controller ready');
@@ -410,6 +487,21 @@ export default function ARDebug2Page() {
         setModelPlaced(false);
         xrSessionRef.current = null;
         hitTestSourceRef.current = null;
+        
+        // Stop speech and timers
+        if (window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
+        if (autoPlayTimerRef.current) {
+          clearTimeout(autoPlayTimerRef.current);
+          autoPlayTimerRef.current = null;
+        }
+        setIsSpeaking(false);
+        hasSpokenRef.current = false;
+        
+        // Reset scene
+        setCurrentScene(0);
+        currentSceneRef.current = 0;
         
         if (placedModelRef.current) {
           rendererRef.current.scene.remove(placedModelRef.current);
@@ -495,6 +587,19 @@ export default function ARDebug2Page() {
             transition: 'all 0.3s ease',
             pointerEvents: 'none'
           }}>
+            {/* Scene indicator */}
+            <div style={{ 
+              fontSize: '0.9rem', 
+              marginBottom: '0.75rem',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              padding: '0.5rem 1rem',
+              borderRadius: '12px',
+              display: 'inline-block'
+            }}>
+              Scene {currentScene + 1}/{scenes.length} - {scenes[currentScene].name}
+              {isSpeaking && ' 🔊'}
+            </div>
+            
             {surfaceFound ? (
               <>
                 <div style={{ fontSize: '4rem', marginBottom: '0.75rem', lineHeight: 1 }}>✅</div>
@@ -545,8 +650,11 @@ export default function ARDebug2Page() {
               textAlign: 'center',
               pointerEvents: 'none'
             }}>
-              <div style={{ fontSize: '4rem', marginBottom: '0.5rem', lineHeight: 1 }}>🦎</div>
+              <div style={{ fontSize: '4rem', marginBottom: '0.5rem', lineHeight: 1 }}>
+                {currentScene === 0 ? '🐊' : '🍌'}
+              </div>
               <div>PLACED!</div>
+              <div style={{ fontSize: '1rem', marginTop: '0.5rem' }}>{scenes[currentScene].name}</div>
             </div>
           )}
 
