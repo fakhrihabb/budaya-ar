@@ -86,7 +86,7 @@ export default function ARDebug2Page() {
       
       // Create new subtitle with updated text
       const newSubtitle = await rendererRef.current.createSubtitleSprite(text);
-      newSubtitle.visible = true; // Always visible
+      newSubtitle.visible = micIndicatorRef.current.visible; // Maintain previous visibility state
       rendererRef.current.scene.add(newSubtitle);
       micIndicatorRef.current = newSubtitle;
       addLog('✅ Subtitle text updated');
@@ -333,8 +333,15 @@ export default function ARDebug2Page() {
         const createSubtitleSprite = async (text = 'Loading...') => {
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
-          canvas.width = 800;
-          canvas.height = 160;
+          
+          // Calculate canvas size based on screen dimensions
+          const screenWidth = window.innerWidth;
+          const screenHeight = window.innerHeight;
+          const canvasWidth = Math.floor(screenWidth * 0.85); // 85% of screen width
+          const canvasHeight = Math.floor(canvasWidth * 0.2); // Maintain aspect ratio
+          
+          canvas.width = canvasWidth;
+          canvas.height = canvasHeight;
           
           // Clear background
           context.clearRect(0, 0, canvas.width, canvas.height);
@@ -361,8 +368,8 @@ export default function ARDebug2Page() {
             });
             
             // Draw circular avatar on the left
-            const avatarSize = 90;
-            const avatarX = 65;
+            const avatarSize = Math.floor(canvasHeight * 0.56); // Scale avatar with canvas height
+            const avatarX = Math.floor(canvasHeight * 0.41); // Position relative to canvas size
             const avatarY = canvas.height / 2;
             
             context.save();
@@ -382,34 +389,34 @@ export default function ARDebug2Page() {
             // If avatar fails to load, draw placeholder
             context.fillStyle = '#3B82F6';
             context.beginPath();
-            context.arc(65, canvas.height / 2, 45, 0, Math.PI * 2);
+            context.arc(avatarX, canvas.height / 2, avatarSize / 2, 0, Math.PI * 2);
             context.fill();
             
             context.fillStyle = '#FFFFFF';
-            context.font = 'Bold 40px Arial';
+            context.font = `Bold ${Math.floor(canvasHeight * 0.25)}px Arial`; // Scale font with canvas height
             context.textAlign = 'center';
             context.textBaseline = 'middle';
-            context.fillText('🎙️', 65, canvas.height / 2);
+            context.fillText('🎙️', avatarX, canvas.height / 2);
           }
           
           // Draw character name (optional)
           context.fillStyle = '#FFC857';
-          context.font = 'Bold 22px Arial';
+          context.font = `Bold ${Math.floor(canvasHeight * 0.14)}px Arial`; // Scale font with canvas height
           context.textAlign = 'left';
           context.textBaseline = 'top';
-          context.fillText('Narrator', 135, 22);
+          context.fillText('Narrator', Math.floor(avatarSize * 1.5), Math.floor(canvasHeight * 0.14));
           
           // Draw subtitle text (word-wrapped)
           context.fillStyle = '#FFFFFF';
-          context.font = '18px Arial';
+          context.font = `${Math.floor(canvasHeight * 0.11)}px Arial`; // Scale font with canvas height
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - 160;
-          const lineHeight = 24;
+          const maxWidth = canvas.width - Math.floor(avatarSize * 2); // Adjust text area based on avatar size
+          const lineHeight = Math.floor(canvasHeight * 0.15);
           const words = text.split(' ');
           let line = '';
-          let y = 52;
+          let y = Math.floor(canvasHeight * 0.33); // Start text lower on smaller screens
           
           for (let i = 0; i < words.length; i++) {
             const testLine = line + words[i] + ' ';
@@ -434,7 +441,16 @@ export default function ARDebug2Page() {
             depthWrite: false
           });
           const sprite = new THREE.Sprite(spriteMaterial);
-          sprite.scale.set(0.75, 0.15, 1); // Smaller to fit screen horizontally
+          
+          // Calculate scale to maintain 85% screen width in 3D space
+          // The scale is relative to the camera's view, so we need to adjust based on screen size
+          const scaleFactor = 0.001; // Base scale factor
+          sprite.scale.set(
+            canvasWidth * scaleFactor,
+            canvasHeight * scaleFactor,
+            1
+          );
+          
           return sprite;
         };
 
@@ -617,7 +633,7 @@ export default function ARDebug2Page() {
               subtitleIndicator.lookAt(camera.position);
               
               // Maintain consistent scale (no pulsing for subtitles)
-              subtitleIndicator.scale.set(0.75, 0.15, 1);
+              // Scale is already set based on screen size during creation
               
               // More pronounced opacity variation when speaking vs standby
               if (isSpeaking) {
