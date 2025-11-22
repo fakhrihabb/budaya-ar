@@ -478,19 +478,9 @@ export default function ARDebug2Page() {
         reticleRef.current = reticle;
         addLog('✅ Reticle created (green pulsing ring)');
 
-        // Create 3D status indicator (visible in AR)
-        const statusGeometry = new THREE.PlaneGeometry(0.5, 0.15);
-        const statusMaterial = new THREE.MeshBasicMaterial({ 
-          color: 0xFF8C00,
-          transparent: true,
-          opacity: 0.9,
-          side: THREE.DoubleSide
-        });
-        const statusIndicator = new THREE.Mesh(statusGeometry, statusMaterial);
-        statusIndicator.visible = false;
-        scene.add(statusIndicator);
-        statusIndicatorRef.current = statusIndicator;
-        addLog('✅ 3D status indicator created');
+        // 3D status indicator removed as requested
+        statusIndicatorRef.current = null;
+        addLog('ℹ️ 3D status indicator disabled');
 
         // Create text sprite for scanning
         const scanningText = createTextSprite('SCANNING...', '#FFFFFF', 'rgba(255, 140, 0, 0.8)');
@@ -506,7 +496,7 @@ export default function ARDebug2Page() {
         micIndicatorRef.current = subtitleIndicator;
         addLog('✅ Subtitle indicator created');
 
-        rendererRef.current = { THREE, renderer, scene, camera, reticleMaterial, statusMaterial, createTextSprite, createSubtitleSprite };
+        rendererRef.current = { THREE, renderer, scene, camera, reticleMaterial, createTextSprite, createSubtitleSprite };
         addLog('✅ Three.js initialized successfully');
 
         let pulseTime = 0;
@@ -516,26 +506,17 @@ export default function ARDebug2Page() {
           if (frame && xrSessionRef.current) {
             const referenceSpace = renderer.xr.getReferenceSpace();
             const reticle = reticleRef.current;
-            const statusIndicator = statusIndicatorRef.current;
             const textSprites = textSpriteRef.current;
             const camera = renderer.xr.getCamera();
 
-            // Position status indicator and text in front of camera
-            if (statusIndicator && camera) {
+            // Position text sprite in front of camera
+            if (textSprites?.scanning && camera) {
               const cameraDirection = new THREE.Vector3();
               camera.getWorldDirection(cameraDirection);
-              const indicatorPosition = camera.position.clone();
-              indicatorPosition.add(cameraDirection.multiplyScalar(1.5)); // 1.5m in front
-              indicatorPosition.y += 0.3; // Slightly above center
-              statusIndicator.position.copy(indicatorPosition);
-              statusIndicator.lookAt(camera.position);
-              
-              // Position text sprite
-              if (textSprites?.scanning) {
-                const textPosition = indicatorPosition.clone();
-                textPosition.y += 0.15; // Above the colored plane
-                textSprites.scanning.position.copy(textPosition);
-              }
+              const textPosition = camera.position.clone();
+              textPosition.add(cameraDirection.multiplyScalar(1.5)); // 1.5m in front
+              textPosition.y += 0.45; // Position where the colored plane would be + above it
+              textSprites.scanning.position.copy(textPosition);
             }
 
             // Perform hit test to find surfaces
@@ -552,10 +533,7 @@ export default function ARDebug2Page() {
                 const scale = 1 + Math.sin(pulseTime) * 0.2;
                 reticle.scale.set(scale, scale, scale);
                 
-                // Update status indicator - GREEN
-                if (statusIndicator) {
-                  statusIndicator.visible = false; // Hide when surface found
-                }
+                // Status indicator removed - no need to update
                 
                 // Hide scanning text
                 if (textSprites?.scanning) {
@@ -592,14 +570,7 @@ export default function ARDebug2Page() {
               } else {
                 reticle.visible = false;
                 
-                // Update status indicator - ORANGE (scanning)
-                if (statusIndicator) {
-                  statusIndicator.visible = true;
-                  statusIndicator.material.color.setHex(0xFF8C00); // Orange
-                  // Pulse animation
-                  const opacity = 0.7 + Math.sin(timestamp * 0.003) * 0.3;
-                  statusIndicator.material.opacity = opacity;
-                }
+                // Status indicator removed - no need to update
                 
                 // Show scanning text
                 if (textSprites?.scanning) {
@@ -768,11 +739,8 @@ export default function ARDebug2Page() {
       rendererRef.current.scene.add(controller);
       addLog('✅ Tap-to-place controller ready');
       
-      // Show 3D status indicator
-      if (statusIndicatorRef.current) {
-        statusIndicatorRef.current.visible = true;
-        addLog('✅ 3D status indicator activated');
-      }
+      // 3D status indicator removed - skipping activation
+      addLog('ℹ️ 3D status indicator disabled');
       
       // Show scanning text
       if (textSpriteRef.current?.scanning) {
@@ -821,9 +789,7 @@ export default function ARDebug2Page() {
           reticleRef.current.visible = false;
         }
         
-        if (statusIndicatorRef.current) {
-          statusIndicatorRef.current.visible = false;
-        }
+        // 3D status indicator removed - no need to hide
         
         if (textSpriteRef.current?.scanning) {
           textSpriteRef.current.scanning.visible = false;
