@@ -491,7 +491,7 @@ export default function ARDebug2Page() {
 
         // Create subtitle indicator sprite (game-style with avatar)
         const subtitleIndicator = await createSubtitleSprite('Ready to start the AR experience...');
-        subtitleIndicator.visible = true; // Always visible by default
+        subtitleIndicator.visible = false; // Hidden by default, only show when surface found or model placed
         scene.add(subtitleIndicator);
         micIndicatorRef.current = subtitleIndicator;
         addLog('✅ Subtitle indicator created');
@@ -555,8 +555,11 @@ export default function ARDebug2Page() {
                   rendererRef.current.scene.add(successText);
                   textSprites.success = successText;
                   
-                  // Update subtitle when surface is found
+                  // Show subtitle when surface is found
                   updateSubtitleText('Surface found! Tap the screen to place the model');
+                  if (micIndicatorRef.current) {
+                    micIndicatorRef.current.visible = true;
+                  }
                   
                   // Auto-hide after 3 seconds
                   if (successTimerRef.current) clearTimeout(successTimerRef.current);
@@ -587,8 +590,10 @@ export default function ARDebug2Page() {
                 
                 if (lastSurfaceState) {
                   addLog('⚠️ Surface lost, keep scanning...');
-                  // Update subtitle when surface is lost
-                  updateSubtitleText('Surface lost. Keep scanning for a flat surface...');
+                  // Hide subtitle when surface is lost
+                  if (micIndicatorRef.current) {
+                    micIndicatorRef.current.visible = false;
+                  }
                   lastSurfaceState = false;
                 }
                 setSurfaceFound(false);
@@ -602,7 +607,7 @@ export default function ARDebug2Page() {
 
             // Position and animate subtitle indicator
             const subtitleIndicator = micIndicatorRef.current;
-            if (subtitleIndicator && camera) {
+            if (subtitleIndicator && camera && subtitleIndicator.visible) {
               const cameraDirection = new THREE.Vector3();
               camera.getWorldDirection(cameraDirection);
               const subtitlePosition = camera.position.clone();
@@ -611,8 +616,6 @@ export default function ARDebug2Page() {
               subtitleIndicator.position.copy(subtitlePosition);
               subtitleIndicator.lookAt(camera.position);
               
-              // Always ensure subtitle is visible
-              subtitleIndicator.visible = true;
               // Maintain consistent scale (no pulsing for subtitles)
               subtitleIndicator.scale.set(0.75, 0.15, 1);
               
@@ -646,8 +649,8 @@ export default function ARDebug2Page() {
 
   // Sync mic indicator with isSpeaking state
   useEffect(() => {
-    if (micIndicatorRef.current) {
-      // Always visible, but update content based on speaking state
+    if (micIndicatorRef.current && micIndicatorRef.current.visible) {
+      // Only update content if subtitle is visible
       if (isSpeaking) {
         addLog('💬 Subtitle active');
       } else {
@@ -737,11 +740,14 @@ export default function ARDebug2Page() {
         addLog(`✅ ${sceneName} placed at (${newModel.position.x.toFixed(2)}, ${newModel.position.y.toFixed(2)}, ${newModel.position.z.toFixed(2)})`);
         setModelPlaced(true);
         
-        // Update subtitle when model is placed
+        // Show subtitle when model is placed
         if (isFirstPlacement && !hasSpokenRef.current) {
           updateSubtitleText('Model placed! Starting narration...');
         } else {
           updateSubtitleText(`${sceneName} placed! You can place again to replace it.`);
+        }
+        if (micIndicatorRef.current) {
+          micIndicatorRef.current.visible = true;
         }
         
         // Hide confirmation after 2 seconds
@@ -773,8 +779,7 @@ export default function ARDebug2Page() {
       addLog('📡 Scanning for surfaces...');
       addLog('🟠 Look for ORANGE indicator in AR view');
       
-      // Update subtitle to show scanning status
-      updateSubtitleText('Scanning for surfaces... Move your device slowly');
+      // Don't show subtitle during scanning - only when surface found or model placed
 
       // Handle session end
       session.addEventListener('end', () => {
@@ -825,9 +830,9 @@ export default function ARDebug2Page() {
           successTimerRef.current = null;
         }
         
-        // Update subtitle when AR session ends
+        // Hide subtitle when AR session ends
         if (micIndicatorRef.current) {
-          updateSubtitleText('AR session ended. Thank you for using our AR experience!');
+          micIndicatorRef.current.visible = false;
         }
       });
 
