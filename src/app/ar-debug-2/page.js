@@ -334,11 +334,15 @@ export default function ARDebug2Page() {
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
           
-          // Calculate canvas size based on screen dimensions
-          const screenWidth = window.innerWidth;
-          const screenHeight = window.innerHeight;
-          const canvasWidth = Math.floor(screenWidth * 0.85); // 85% of screen width
-          const canvasHeight = Math.floor(canvasWidth * 0.2); // Maintain aspect ratio
+          // Use a reasonable fixed size for the canvas but scale it in 3D space
+          // This avoids performance issues with very large canvases
+          const screenWidth = window.innerWidth || 800;
+          const screenHeight = window.innerHeight || 600;
+          
+          // Use a smaller fixed canvas size for performance
+          // We'll scale it in 3D space to achieve the 85% screen width effect
+          const canvasWidth = 1024; // Fixed size for performance
+          const canvasHeight = 256; // Fixed size for performance
           
           canvas.width = canvasWidth;
           canvas.height = canvasHeight;
@@ -368,8 +372,8 @@ export default function ARDebug2Page() {
             });
             
             // Draw circular avatar on the left
-            const avatarSize = Math.floor(canvasHeight * 0.56); // Scale avatar with canvas height
-            const avatarX = Math.floor(canvasHeight * 0.41); // Position relative to canvas size
+            const avatarSize = 90; // Fixed size for performance
+            const avatarX = 65; // Fixed position
             const avatarY = canvas.height / 2;
             
             context.save();
@@ -393,7 +397,7 @@ export default function ARDebug2Page() {
             context.fill();
             
             context.fillStyle = '#FFFFFF';
-            context.font = `Bold ${Math.floor(canvasHeight * 0.25)}px Arial`; // Scale font with canvas height
+            context.font = 'Bold 40px Arial'; // Fixed font size
             context.textAlign = 'center';
             context.textBaseline = 'middle';
             context.fillText('🎙️', avatarX, canvas.height / 2);
@@ -401,22 +405,22 @@ export default function ARDebug2Page() {
           
           // Draw character name (optional)
           context.fillStyle = '#FFC857';
-          context.font = `Bold ${Math.floor(canvasHeight * 0.14)}px Arial`; // Scale font with canvas height
+          context.font = 'Bold 22px Arial'; // Fixed font size
           context.textAlign = 'left';
           context.textBaseline = 'top';
-          context.fillText('Narrator', Math.floor(avatarSize * 1.5), Math.floor(canvasHeight * 0.14));
+          context.fillText('Narrator', 135, 22);
           
           // Draw subtitle text (word-wrapped)
           context.fillStyle = '#FFFFFF';
-          context.font = `${Math.floor(canvasHeight * 0.11)}px Arial`; // Scale font with canvas height
+          context.font = '18px Arial'; // Fixed font size
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - Math.floor(avatarSize * 2); // Adjust text area based on avatar size
-          const lineHeight = Math.floor(canvasHeight * 0.15);
+          const maxWidth = canvas.width - 160; // Fixed text area
+          const lineHeight = 24; // Fixed line height
           const words = text.split(' ');
           let line = '';
-          let y = Math.floor(canvasHeight * 0.33); // Start text lower on smaller screens
+          let y = 52; // Fixed starting position
           
           for (let i = 0; i < words.length; i++) {
             const testLine = line + words[i] + ' ';
@@ -443,11 +447,13 @@ export default function ARDebug2Page() {
           const sprite = new THREE.Sprite(spriteMaterial);
           
           // Calculate scale to maintain 85% screen width in 3D space
-          // The scale is relative to the camera's view, so we need to adjust based on screen size
-          const scaleFactor = 0.001; // Base scale factor
+          // We'll use a dynamic scale factor based on screen width
+          const deviceScreenWidth = window.innerWidth || 800;
+          const scaleFactor = (deviceScreenWidth * 0.85) / canvasWidth; // Calculate scale to achieve 85% screen width
+          
           sprite.scale.set(
-            canvasWidth * scaleFactor,
-            canvasHeight * scaleFactor,
+            scaleFactor,
+            scaleFactor * 0.25, // Maintain aspect ratio
             1
           );
           
@@ -677,9 +683,15 @@ export default function ARDebug2Page() {
 
   // Start AR session
   const startAR = async () => {
-    if (!rendererRef.current || !arSupported) {
-      addLog('❌ AR not ready or not supported');
-      alert('AR not ready or not supported');
+    if (!rendererRef.current) {
+      addLog('❌ AR renderer not ready');
+      alert('AR renderer not ready - please wait for initialization');
+      return;
+    }
+    
+    if (!arSupported) {
+      addLog('❌ AR not supported');
+      alert('AR not supported on this device');
       return;
     }
 
