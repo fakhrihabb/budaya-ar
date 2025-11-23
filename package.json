@@ -9,11 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
-<<<<<<< HEAD
     "@google/generative-ai": "^0.24.1",
-=======
     "@google/model-viewer": "^4.1.0",
->>>>>>> 52b6499d545aa3df506f0913d73b07f0b12cdc05
     "lucide-react": "^0.552.0",
     "next": "16.0.1",
     "react": "19.2.0",
