@@ -35,9 +35,10 @@ export async function POST(request) {
     // ===== CACHE CHECK =====
     if (useCache && title && content) {
       console.log('Checking cache for similar models...');
+      console.log('Cache key based on prompt:', prompt?.substring(0, 50) + '...');
 
-      // 1. Check exact match
-      const exactMatch = getCachedModel(title, content);
+      // 1. Check exact match (using prompt for better consistency)
+      const exactMatch = getCachedModel(title, content, prompt);
       if (exactMatch) {
         console.log('✅ Exact match found in cache! Reusing model.');
         incrementUsageCount(exactMatch.cacheKey || '');
@@ -53,8 +54,8 @@ export async function POST(request) {
         });
       }
 
-      // 2. Check similarity match (70% threshold)
-      const similarModel = findSimilarModel(title, content, 70);
+      // 2. Check similarity match (70% threshold, using prompt)
+      const similarModel = findSimilarModel(title, content, 70, prompt);
       if (similarModel) {
         console.log(`✅ Similar model found (${similarModel.similarity}% match)! Reusing model.`);
         incrementUsageCount(similarModel.cacheKey);
@@ -196,8 +197,8 @@ export async function GET(request) {
             modelUrl: modelUrl,
             thumbnailUrl: thumbnailUrl,
             taskId: taskId
-          });
-          console.log('Cache saved successfully!');
+          }, prompt); // Pass prompt for consistent cache key
+          console.log('Cache saved successfully with prompt-based key!');
         } catch (cacheError) {
           console.error('Error saving to cache:', cacheError);
           // Don't fail the request if cache save fails

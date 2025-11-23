@@ -469,6 +469,47 @@ export default function Generate3DPage() {
           ))}
         </div>
 
+        {/* View in AR Button - Show when at least 1 model completed */}
+        {models.length > 0 && models.some(m => m.status === 'completed') && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => {
+                // Save AR data to localStorage
+                const arData = {
+                  story: storyData.story,
+                  models: models.map(m => ({
+                    title: m.title,
+                    content: m.content,
+                    prompt: m.prompt,
+                    modelUrl: m.modelUrl || null,
+                    thumbnailUrl: m.thumbnailUrl || null,
+                    status: m.status // Include status for AR page
+                  }))
+                };
+                localStorage.setItem('arStoryData', JSON.stringify(arData));
+
+                // Navigate to AR page
+                window.location.href = '/ar-debug-2';
+              }}
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-lg font-bold transition-all transform hover:scale-105 active:scale-95 shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, #473C8B 0%, #8A7FD8 100%)',
+                color: 'white',
+                boxShadow: '0 10px 40px rgba(71, 60, 139, 0.3)'
+              }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              View in AR
+              {!models.every(m => m.status === 'completed') && (
+                <span className="text-xs opacity-80">(Others will generate in AR)</span>
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Info */}
         <div className="mt-6 p-4 rounded-xl space-y-2" style={{
           background: 'rgba(138, 127, 216, 0.1)',

@@ -89,16 +89,20 @@ export function calculateSimilarity(text1, text2) {
 /**
  * Find similar model in cache
  * Returns cached model if similarity > threshold
+ * Use prompt for better matching if available
  */
-export function findSimilarModel(title, content, threshold = 70) {
+export function findSimilarModel(title, content, threshold = 70, prompt = null) {
   const cache = readCache();
-  const searchText = `${title} ${content}`.toLowerCase();
+
+  // Use prompt for similarity matching if available (more accurate)
+  const searchText = (prompt || `${title} ${content}`).toLowerCase();
 
   let bestMatch = null;
   let highestSimilarity = 0;
 
   for (const [key, model] of Object.entries(cache.models)) {
-    const cachedText = `${model.title} ${model.content}`.toLowerCase();
+    // Compare with cached prompt if available, otherwise use title+content
+    const cachedText = (model.prompt || `${model.title} ${model.content}`).toLowerCase();
     const similarity = calculateSimilarity(searchText, cachedText);
 
     if (similarity >= threshold && similarity > highestSimilarity) {
@@ -116,24 +120,33 @@ export function findSimilarModel(title, content, threshold = 70) {
 
 /**
  * Get model from cache by exact key
+ * For consistent caching, use prompt instead of content (narasi)
  */
-export function getCachedModel(title, content) {
+export function getCachedModel(title, content, prompt = null) {
   const cache = readCache();
-  const key = generateCacheKey(`${title} ${content}`);
+
+  // Use prompt for cache key if available (more consistent for same objects)
+  const cacheText = prompt || `${title} ${content}`;
+  const key = generateCacheKey(cacheText);
 
   return cache.models[key] || null;
 }
 
 /**
  * Save model to cache
+ * Use prompt for cache key (more consistent than narasi)
  */
-export function saveModelToCache(title, content, modelData) {
+export function saveModelToCache(title, content, modelData, prompt = null) {
   const cache = readCache();
-  const key = generateCacheKey(`${title} ${content}`);
+
+  // Use prompt for cache key if available (more consistent for same objects)
+  const cacheText = prompt || `${title} ${content}`;
+  const key = generateCacheKey(cacheText);
 
   cache.models[key] = {
     title: title,
     content: content,
+    prompt: prompt, // Store prompt for better cache matching
     modelUrl: modelData.modelUrl,
     thumbnailUrl: modelData.thumbnailUrl,
     taskId: modelData.taskId,

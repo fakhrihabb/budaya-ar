@@ -9,7 +9,68 @@ export default function ARDebug2Page() {
     const [arSupported, setArSupported] = useState(false);
     const [arEnabled, setArEnabled] = useState(false);
     const [isInAR, setIsInAR] = useState(false);
+    const [scenes, setScenes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [generatingNext, setGeneratingNext] = useState(false);
     const modelViewerRef = useRef(null);
+    const hasGeneratedNext = useRef(new Set()); // Track which models we've started generating
+
+    // Load AR story data from localStorage
+    useEffect(() => {
+        const loadARData = () => {
+            try {
+                const arDataStr = localStorage.getItem('arStoryData');
+                if (!arDataStr) {
+                    console.error('No AR data found in localStorage');
+                    // Fallback to default scenes
+                    setScenes([
+                        {
+                            model: '/models/rumahgadang.glb',
+                            script: 'Rumah Gadang adalah rumah adat Minangkabau yang khas dengan atapnya yang melengkung seperti tanduk kerbau.',
+                            scale: '1 1 1',
+                            title: 'Rumah Gadang',
+                            status: 'ready'
+                        }
+                    ]);
+                    setLoading(false);
+                    return;
+                }
+
+                const arData = JSON.parse(arDataStr);
+                console.log('Loaded AR data:', arData);
+
+                // Convert to scenes format
+                const loadedScenes = arData.models.map((model, index) => {
+                    // Proxy Tripo URLs through our API to avoid CORS issues
+                    let proxiedModelUrl = model.modelUrl;
+                    if (proxiedModelUrl && proxiedModelUrl.includes('tripo3d.com')) {
+                        proxiedModelUrl = `/api/proxy-model?url=${encodeURIComponent(model.modelUrl)}`;
+                    }
+
+                    return {
+                        model: proxiedModelUrl || '/models/rumahgadang.glb', // Fallback model
+                        script: model.content,
+                        scale: '1 1 1', // Default scale
+                        title: model.title,
+                        prompt: model.prompt,
+                        status: model.modelUrl ? 'ready' : 'pending', // Ready if has URL, otherwise pending
+                        taskId: null,
+                        modelUrl: model.modelUrl,
+                        originalStatus: model.status
+                    };
+                });
+
+                setScenes(loadedScenes);
+                setLoading(false);
+                console.log('Scenes loaded:', loadedScenes);
+            } catch (error) {
+                console.error('Error loading AR data:', error);
+                setLoading(false);
+            }
+        };
+
+        loadARData();
+    }, []);
 
     // Load model-viewer component on client side only
     useEffect(() => {
@@ -61,26 +122,156 @@ export default function ARDebug2Page() {
         };
     }, [modelViewerRef]);
 
-    const scenes = [
-        {
-            model: '/models/rumahgadang.glb',
-            script: 'Rumah Gadang adalah rumah adat Minangkabau yang khas dengan atapnya yang melengkung seperti tanduk kerbau.',
-            scale: '1 1 1',
-            title: 'Rumah Gadang'
-        },
-        {
-            model: '/models/banana.glb',
-            script: 'Jalur digunakan untuk mengangkut hasil bumi seperti buah-buahan lokal dan tebu ke hilir sungai.',
-            scale: '0.3 0.3 0.3',
-            title: 'Pacu Jalur'
-        },
-        {
-            model: '/models/cartoon_crocodile_croco-roco.glb',
-            script: 'Perahu memanjang ini dihias dengan ornamen kepala buaya atau ular, melambangkan budaya setempat.',
-            scale: '0.3 0.3 0.3',
-            title: 'Perahu Buaya'
+    // Generate model function (real-time generation)
+    const generateModelInAR = async (index) => {
+        const scene = scenes[index];
+
+        console.log(`🎨 Starting real-time generation for model ${index + 1}: ${scene.title}`);
+
+        // Update status to generating
+        setScenes(prev => prev.map((s, i) =>
+            i === index ? { ...s, status: 'generating', progress: 0 } : s
+        ));
+
+        try {
+            // Call API to generate model
+            const response = await fetch('/api/generate-3d-model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: index === 4 ? 'image_to_model' : 'text_to_model', // Chapter 5 uses higher poly
+                    prompt: scene.prompt,
+                    title: scene.title,
+                    content: scene.script,
+                    artStyle: 'low-poly',
+                    negativePrompt: 'low quality, blurry, distorted, deformed, ugly',
+                    useCache: index !== 4 // Only cache generic models
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to generate model');
+            }
+
+            // If cached, model is ready immediately
+            if (data.cached) {
+                console.log(`✅ Model ${index + 1} loaded from cache!`);
+
+                // Proxy the model URL
+                let proxiedUrl = data.modelUrl;
+                if (proxiedUrl && proxiedUrl.includes('tripo3d.com')) {
+                    proxiedUrl = `/api/proxy-model?url=${encodeURIComponent(data.modelUrl)}`;
+                }
+
+                setScenes(prev => prev.map((s, i) =>
+                    i === index ? {
+                        ...s,
+                        status: 'ready',
+                        modelUrl: data.modelUrl,
+                        model: proxiedUrl,
+                        progress: 100
+                    } : s
+                ));
+                return;
+            }
+
+            // Start polling for task status
+            const taskId = data.taskId;
+            pollModelStatus(index, taskId, scene.title, scene.script);
+
+        } catch (error) {
+            console.error(`❌ Error generating model ${index + 1}:`, error);
+            setScenes(prev => prev.map((s, i) =>
+                i === index ? { ...s, status: 'error', error: error.message } : s
+            ));
         }
-    ];
+    };
+
+    // Poll model generation status
+    const pollModelStatus = async (index, taskId, sceneTitle, sceneScript) => {
+        let attempts = 0;
+        const maxAttempts = 120; // 10 minutes
+
+        const checkStatus = async () => {
+            try {
+                const response = await fetch(`/api/generate-3d-model?taskId=${taskId}&title=${encodeURIComponent(sceneTitle)}&content=${encodeURIComponent(sceneScript)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to check status');
+                }
+
+                // Update progress
+                setScenes(prev => prev.map((s, i) =>
+                    i === index ? { ...s, progress: data.progress || s.progress } : s
+                ));
+
+                if (data.status === 'SUCCEEDED') {
+                    console.log(`✅ Model ${index + 1} completed!`);
+
+                    // Proxy the model URL
+                    let proxiedUrl = data.modelUrl;
+                    if (proxiedUrl && proxiedUrl.includes('tripo3d.com')) {
+                        proxiedUrl = `/api/proxy-model?url=${encodeURIComponent(data.modelUrl)}`;
+                    }
+
+                    setScenes(prev => prev.map((s, i) =>
+                        i === index ? {
+                            ...s,
+                            status: 'ready',
+                            modelUrl: data.modelUrl,
+                            model: proxiedUrl,
+                            progress: 100
+                        } : s
+                    ));
+                    return; // Stop polling
+                }
+
+                if (data.status === 'FAILED') {
+                    throw new Error('Model generation failed');
+                }
+
+                // Continue polling
+                attempts++;
+                if (attempts < maxAttempts) {
+                    setTimeout(checkStatus, 5000); // Check every 5 seconds
+                } else {
+                    throw new Error('Timeout waiting for model generation');
+                }
+
+            } catch (error) {
+                console.error(`Error polling model ${index + 1}:`, error);
+                setScenes(prev => prev.map((s, i) =>
+                    i === index ? { ...s, status: 'error', error: error.message } : s
+                ));
+            }
+        };
+
+        checkStatus();
+    };
+
+    // Progressive model generation - generate next model while current TTS is playing
+    useEffect(() => {
+        if (scenes.length === 0) return;
+
+        // When TTS starts speaking, generate next model in background
+        if (isSpeaking && currentScene < scenes.length - 1) {
+            const nextIndex = currentScene + 1;
+            const nextScene = scenes[nextIndex];
+
+            // Only generate if pending and haven't started before
+            if (nextScene.status === 'pending' && !hasGeneratedNext.current.has(nextIndex)) {
+                hasGeneratedNext.current.add(nextIndex);
+                console.log(`🔄 Starting background generation for model ${nextIndex + 1}...`);
+                generateModelInAR(nextIndex);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isSpeaking, currentScene]); // Only depend on isSpeaking and currentScene, not scenes
 
     // Generate dynamic title based on scene content
     const getSceneTitle = (scene) => {
@@ -93,9 +284,49 @@ export default function ARDebug2Page() {
     };
 
     const handleNextModel = () => {
-        const nextScene = (currentScene + 1) % scenes.length;
-        setCurrentScene(nextScene);
-        // addLog(`Switched to scene ${nextScene + 1}: ${scenes[nextScene].model}`);
+        if (scenes.length === 0) return;
+
+        const nextIndex = (currentScene + 1) % scenes.length;
+        const nextScene = scenes[nextIndex];
+
+        // Check if next model is ready
+        if (nextScene.status !== 'ready') {
+            console.log(`⏳ Next model not ready yet (status: ${nextScene.status}), waiting...`);
+            setGeneratingNext(true);
+
+            // If still pending, start generating now
+            if (nextScene.status === 'pending' && !hasGeneratedNext.current.has(nextIndex)) {
+                hasGeneratedNext.current.add(nextIndex);
+                console.log(`🚀 User clicked Next - starting immediate generation for model ${nextIndex + 1}`);
+                generateModelInAR(nextIndex);
+            }
+
+            // Poll until ready
+            const checkReady = setInterval(() => {
+                // Re-fetch current state from scenes
+                setScenes(currentScenes => {
+                    const scene = currentScenes[nextIndex];
+                    if (scene && scene.status === 'ready') {
+                        clearInterval(checkReady);
+                        setGeneratingNext(false);
+                        setCurrentScene(nextIndex);
+                    }
+                    return currentScenes; // Return unchanged
+                });
+            }, 500);
+
+            // Timeout after 15 minutes
+            setTimeout(() => {
+                clearInterval(checkReady);
+                setGeneratingNext(false);
+                console.error('Timeout waiting for next model');
+            }, 900000);
+
+            return;
+        }
+
+        // Model is ready, switch immediately
+        setCurrentScene(nextIndex);
     };
 
     const speakText = (text) => {
@@ -110,8 +341,35 @@ export default function ARDebug2Page() {
 
     useEffect(() => {
         // Speak script when scene changes
-        speakText(scenes[currentScene].script);
-    }, [currentScene]);
+        if (scenes.length > 0 && scenes[currentScene]) {
+            speakText(scenes[currentScene].script);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentScene]); // Only depend on currentScene
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="w-full h-screen flex items-center justify-center bg-gray-100">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600 text-lg">Loading AR Experience...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // No scenes available
+    if (scenes.length === 0) {
+        return (
+            <div className="w-full h-screen flex items-center justify-center bg-gray-100">
+                <div className="text-center p-8">
+                    <p className="text-gray-600 text-lg mb-4">No AR data found</p>
+                    <a href="/arcv" className="text-purple-600 underline">Go back to generate story</a>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full h-screen bg-gray-100 relative overflow-hidden">
@@ -336,14 +594,35 @@ export default function ARDebug2Page() {
                             >
                                 {scenes[currentScene].script}
                             </p>
+
+                            {/* Show next model generation progress if generating */}
+                            {currentScene < scenes.length - 1 && scenes[currentScene + 1]?.status === 'generating' && (
+                                <div className="mb-3 p-2 rounded-lg bg-blue-500/20 border border-blue-400/30">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-300"></div>
+                                        <span className="text-xs text-blue-200">Generating next model...</span>
+                                    </div>
+                                    <div className="w-full h-1 rounded-full overflow-hidden bg-blue-900/30">
+                                        <div
+                                            className="h-full bg-blue-400 transition-all duration-500"
+                                            style={{ width: `${scenes[currentScene + 1]?.progress || 0}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <button
                                 onClick={handleNextModel}
-                                className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-5 py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm"
+                                disabled={generatingNext}
+                                className={`bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-5 py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm flex items-center gap-2 ${generatingNext ? 'opacity-70 cursor-wait' : ''}`}
                                 style={{
                                     boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4), 0 0 20px rgba(6, 182, 212, 0.2)',
                                 }}
                             >
-                                NEXT MODEL
+                                {generatingNext && (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                )}
+                                {generatingNext ? 'Loading next model...' : 'NEXT MODEL'}
                             </button>
                         </div>
                     </div>
