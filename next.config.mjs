@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Disable Turbopack for production builds (compatibility with Tailwind CSS v4)
+  experimental: {
+    turbo: false,
+  },
   // Configure external image domains
   images: {
     remotePatterns: [
