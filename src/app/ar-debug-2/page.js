@@ -372,8 +372,8 @@ export default function ARDebug2Page() {
             });
             
             // Draw circular avatar on the left
-            const avatarSize = 120; // Larger size for better visibility
-            const avatarX = 90; // Adjusted position for larger canvas
+            const avatarSize = 160; // Much larger size for better visibility
+            const avatarX = 120; // Adjusted position for larger canvas
             const avatarY = canvas.height / 2;
             
             context.save();
@@ -397,7 +397,7 @@ export default function ARDebug2Page() {
             context.fill();
             
             context.fillStyle = '#FFFFFF';
-            context.font = 'Bold 50px Arial'; // Larger font for better visibility
+            context.font = 'Bold 70px Arial'; // Much larger font for better visibility
             context.textAlign = 'center';
             context.textBaseline = 'middle';
             context.fillText('🎙️', avatarX, canvas.height / 2);
@@ -405,22 +405,22 @@ export default function ARDebug2Page() {
           
           // Draw character name (optional)
           context.fillStyle = '#FFC857';
-          context.font = 'Bold 28px Arial'; // Larger font for better visibility
+          context.font = 'Bold 40px Arial'; // Much larger font for better visibility
           context.textAlign = 'left';
           context.textBaseline = 'top';
-          context.fillText('Narrator', 160, 28);
+          context.fillText('Narrator', 220, 40);
           
           // Draw subtitle text (word-wrapped)
           context.fillStyle = '#FFFFFF';
-          context.font = '24px Arial'; // Larger font for better visibility
+          context.font = '36px Arial'; // Much larger font for better visibility
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - 200; // Adjusted text area for larger canvas
-          const lineHeight = 32; // Larger line height for better readability
+          const maxWidth = canvas.width - 280; // Adjusted text area for larger canvas
+          const lineHeight = 48; // Much larger line height for better readability
           const words = text.split(' ');
           let line = '';
-          let y = 70; // Adjusted starting position for larger canvas
+          let y = 100; // Adjusted starting position for larger canvas
           
           for (let i = 0; i < words.length; i++) {
             const testLine = line + words[i] + ' ';
@@ -446,10 +446,11 @@ export default function ARDebug2Page() {
           });
           const sprite = new THREE.Sprite(spriteMaterial);
           
-          // Calculate scale to maintain 90% screen width in 3D space
+          // Calculate scale to maintain 95% screen width in 3D space
           // We'll use a dynamic scale factor based on screen width
           const deviceScreenWidth = window.innerWidth || 800;
-          const scaleFactor = (deviceScreenWidth * 0.9) / canvasWidth; // Calculate scale to achieve 90% screen width
+          // Use a larger scale factor to ensure subtitle appears bigger
+          const scaleFactor = (deviceScreenWidth * 1.2) / canvasWidth; // Calculate scale to achieve 120% of screen width
           
           sprite.scale.set(
             scaleFactor,
