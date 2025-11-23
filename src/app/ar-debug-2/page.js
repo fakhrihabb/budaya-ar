@@ -371,8 +371,8 @@ export default function ARDebug2Page() {
           
           // Use a larger canvas size for better visibility on mobile
           // We'll scale it in 3D space to achieve the 90% screen width effect
-          const canvasWidth = 1536; // Larger size for better mobile visibility
-          const canvasHeight = 384; // Larger size for better mobile visibility
+          const canvasWidth = 2048; // Increased size for better text rendering
+          const canvasHeight = 512; // Increased size for better text rendering
           
           canvas.width = canvasWidth;
           canvas.height = canvasHeight;
@@ -446,23 +446,42 @@ export default function ARDebug2Page() {
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - 260; // Full width from Narrator position to right edge
-          const lineHeight = 72; // Dramatically larger line height for better readability
+          const maxWidth = canvas.width - 280; // Increased margin for better text fitting
+          const lineHeight = 80; // Increased line height for better readability
           const words = text.split(' ');
           let line = '';
-          let y = 150; // Adjusted starting position for larger canvas
+          let y = 140; // Adjusted starting position for larger canvas
+          
+          // Add debug logging for text rendering
+          addLog(`📝 Rendering subtitle text: "${text}"`);
+          addLog(`📏 Canvas dimensions: ${canvas.width}x${canvas.height}, maxWidth: ${maxWidth}`);
           
           for (let i = 0; i < words.length; i++) {
             const testLine = line + words[i] + ' ';
             const metrics = context.measureText(testLine);
+            
+            // Debug log for each word processing
+            if (i < 5) { // Only log first few words to avoid spam
+              addLog(`🔄 Processing word "${words[i]}": line="${testLine}", width=${metrics.width.toFixed(0)}/${maxWidth}`);
+            }
+            
             if (metrics.width > maxWidth && i > 0) {
               context.fillText(line, 240, y); // Start at same x-coordinate as Narrator text
+              addLog(`✅ Drew line: "${line}" at y=${y}`);
               line = words[i] + ' ';
               y += lineHeight;
             } else {
               line = testLine;
             }
           }
+          
+          // Draw the last line
+          if (line.trim() !== '') {
+            context.fillText(line, 240, y);
+            addLog(`✅ Drew final line: "${line}" at y=${y}`);
+          }
+          
+          addLog(`📊 Total lines rendered: ${Math.ceil(y / lineHeight)}`);
           
           const texture = new THREE.CanvasTexture(canvas);
           texture.needsUpdate = true;
@@ -479,13 +498,15 @@ export default function ARDebug2Page() {
           // We'll use a dynamic scale factor based on screen width
           const deviceScreenWidth = window.innerWidth || 800;
           // Use a larger scale factor to ensure subtitle appears bigger
-          const scaleFactor = (deviceScreenWidth * 1.2) / canvasWidth; // Calculate scale to achieve 120% of screen width
+          const scaleFactor = (deviceScreenWidth * 1.4) / canvasWidth; // Increased scale for better visibility
           
           sprite.scale.set(
             scaleFactor,
             scaleFactor * 0.25, // Maintain aspect ratio
             1
           );
+          
+          addLog(`📏 Subtitle scale: ${scaleFactor.toFixed(3)} (screen: ${deviceScreenWidth}px, canvas: ${canvasWidth}px)`);
           
           return sprite;
         };
