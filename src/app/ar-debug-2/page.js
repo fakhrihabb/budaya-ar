@@ -241,20 +241,28 @@ export default function ARDebug2Page() {
           if (placedModelRef.current) {
             addLog(`🔄 Auto-replacing model...`);
 
-            // Save old position
+            // Save old position and rotation
             const oldPosition = placedModelRef.current.position.clone();
+            const oldRotation = placedModelRef.current.rotation.clone();
+            const oldScale = placedModelRef.current.scale.clone();
 
             // Remove old model
             rendererRef.current.scene.remove(placedModelRef.current);
             addLog(`🗑️ Old model removed from scene`);
 
-            // Place new model at same position
+            // Place new model at same position, rotation, and scale
             const newPlacedModel = model.clone();
             newPlacedModel.position.copy(oldPosition);
+            newPlacedModel.rotation.copy(oldRotation);
+            newPlacedModel.scale.copy(oldScale);
             rendererRef.current.scene.add(newPlacedModel);
             placedModelRef.current = newPlacedModel;
 
             addLog(`✅ ${scenes[newScene].name} placed at (${oldPosition.x.toFixed(2)}, ${oldPosition.y.toFixed(2)}, ${oldPosition.z.toFixed(2)})`);
+            
+            // Update subtitle for model change
+            updateSubtitleText(`${scenes[newScene].name} loaded! Ready for narration.`);
+            toggleSubtitleVisibility(true);
             
             // Speak new scene script
             speakText(scenes[newScene].script, newScene);
@@ -268,6 +276,21 @@ export default function ARDebug2Page() {
     } else {
       addLog('📍 Last scene reached');
     }
+  };
+
+  // Manual next model button handler
+  const handleNextModel = async () => {
+    if (!sessionActive) {
+      addLog('⚠️ AR session not active - cannot switch models');
+      return;
+    }
+    
+    if (!placedModelRef.current) {
+      addLog('⚠️ No model placed yet - please place a model first');
+      return;
+    }
+    
+    await nextScene();
   };
 
   // Check WebXR support
@@ -1101,24 +1124,53 @@ export default function ARDebug2Page() {
               ))}
             </div>
             
-            {/* End AR button */}
-            <button
-              onClick={() => xrSessionRef.current?.end()}
-              style={{
-                backgroundColor: '#DC3545',
-                color: 'white',
-                padding: '1.25rem 2rem',
-                borderRadius: '16px',
-                border: '3px solid white',
-                fontWeight: '900',
-                fontSize: '1.2rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-                textTransform: 'uppercase'
-              }}
-            >
-              🛑 END AR
-            </button>
+            {/* Control buttons row */}
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              {/* Next Model button */}
+              <button
+                onClick={handleNextModel}
+                disabled={!sessionActive || !placedModelRef.current}
+                style={{
+                  backgroundColor: (sessionActive && placedModelRef.current) ? '#28A745' : '#6C757D',
+                  color: 'white',
+                  padding: '1rem 1.5rem',
+                  borderRadius: '12px',
+                  border: '3px solid white',
+                  fontWeight: '800',
+                  fontSize: '1rem',
+                  cursor: (sessionActive && placedModelRef.current) ? 'pointer' : 'not-allowed',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                  textTransform: 'uppercase',
+                  opacity: (sessionActive && placedModelRef.current) ? 1 : 0.6
+                }}
+              >
+                ➡️ NEXT MODEL
+              </button>
+              
+              {/* End AR button */}
+              <button
+                onClick={() => xrSessionRef.current?.end()}
+                style={{
+                  backgroundColor: '#DC3545',
+                  color: 'white',
+                  padding: '1.25rem 2rem',
+                  borderRadius: '16px',
+                  border: '3px solid white',
+                  fontWeight: '900',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                  textTransform: 'uppercase'
+                }}
+              >
+                🛑 END AR
+              </button>
+            </div>
           </div>
         </div>
       )}
