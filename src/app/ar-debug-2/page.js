@@ -578,10 +578,12 @@ export default function ARDebug2Page() {
                   rendererRef.current.scene.add(successText);
                   textSprites.success = successText;
                   
-                  // Show subtitle when surface is found
-                  updateSubtitleText('Surface found! Tap the screen to place the model');
-                  if (micIndicatorRef.current) {
-                    micIndicatorRef.current.visible = true;
+                  // Don't show subtitle during initial scanning - only after first placement
+                  if (firstPlacementCompletedRef.current) {
+                    updateSubtitleText('Surface found! Tap the screen to place the model');
+                    if (micIndicatorRef.current) {
+                      micIndicatorRef.current.visible = true;
+                    }
                   }
                   
                   // Auto-hide after 3 seconds
