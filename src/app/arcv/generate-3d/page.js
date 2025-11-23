@@ -24,7 +24,8 @@ export default function Generate3DPage() {
         const initialModels = parsed.story.chapters.map((chapter, index) => ({
           id: index,
           title: chapter.title,
-          prompt: chapter.content,
+          content: chapter.content, // Keep narrative for display
+          prompt: chapter.modelPrompt || chapter.content, // Use modelPrompt for 3D generation, fallback to content
           status: 'pending', // 'pending', 'generating', 'completed', 'failed'
           taskId: null,
           modelUrl: null,
@@ -78,11 +79,11 @@ export default function Generate3DPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: `Indonesian cultural element: ${model.title}. Create a low-poly 3D model for AR visualization. Simple geometry, optimized for mobile.`,
+            prompt: model.prompt, // Use AI-generated modelPrompt directly
             title: model.title,
-            content: model.prompt,
+            content: model.content || model.prompt, // Use narrative content for cache matching
             artStyle: 'low-poly', // Low-poly untuk hemat credit
-            negativePrompt: 'high-poly, complex geometry, too many vertices, realistic textures',
+            negativePrompt: 'low quality, blurry, distorted, deformed, ugly',
             useCache: true // Enable cache
           })
         });

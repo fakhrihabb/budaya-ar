@@ -25,63 +25,77 @@ export async function POST(request) {
     // Use gemini-2.5-flash (stable, multimodal, fast)
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    const prompt = `Analisis gambar ini yang menunjukkan budaya Indonesia. Buatlah cerita edukatif yang menarik tentang budaya yang terlihat dalam gambar.
+    const prompt = `Analisis gambar ini yang menunjukkan budaya Indonesia.
 
-PENTING: Cerita harus dibagi menjadi TEPAT 5 babak. Setiap babak akan divisualisasikan dengan model 3D AR, jadi fokus pada OBJEK/ELEMEN KONKRET yang mudah dibuat menjadi model 3D.
+TUGAS ANDA:
+1. Identifikasi budaya apa yang terlihat (Minangkabau, Jawa, Bali, Toraja, dll)
+2. Identifikasi objek utama dalam foto (bangunan, tarian, alat musik, pakaian, dll)
+3. Buat cerita edukatif 5 babak tentang budaya tersebut
+4. Untuk SETIAP babak, buat 2 hal:
+   - NARASI cerita (Bahasa Indonesia, 2-3 kalimat)
+   - PROMPT 3D MODEL (English, detailed description for AI 3D generation)
 
-PANDUAN VISUALISASI 3D:
-- Babak 1: Fokus pada OBJEK UTAMA (contoh: bangunan, alat musik, pakaian adat)
-- Babak 2: Fokus pada ELEMEN/BAGIAN SPESIFIK dari objek (contoh: atap, ukiran, motif)
-- Babak 3: Fokus pada ELEMEN LAIN yang menonjol (contoh: ornamen, aksesori, detail)
-- Babak 4: Fokus pada FUNGSI/PENGGUNAAN objek (jelaskan konteks penggunaannya)
-- Babak 5: Fokus pada MAKNA/NILAI budaya (warisan dan pesan moral)
+STRATEGI 3D MODEL:
+- Babak 1-4: GENERIC cultural elements yang bisa di-reuse untuk budaya yang sama
+  * Contoh Minangkabau: buffalo, map of Padang region, traditional woven item, songket fabric
+  * Contoh Bali: gamelan instrument, traditional offerings, Balinese map, traditional dancer
+  * Contoh Jawa: wayang puppet, batik pattern, traditional map, gamelan
 
-PENTING: Gunakan bahasa yang GENERIC dan DESKRIPTIF untuk objek fisik, hindari terlalu detail spesifik yang sulit divisualisasikan.
+- Babak 5: SPECIFIC to the main object in the photo
+  * Jika foto Rumah Gadang → "Traditional Minangkabau house with curved buffalo horn roof"
+  * Jika foto Tari Pendet → "Balinese Pendet dancer in traditional costume"
+
+CONTOH GENERIC vs SPECIFIC:
+✓ GENERIC (Babak 1-4): "Indonesian water buffalo with curved horns" - bisa dipakai untuk berbagai cerita Minang
+✗ SPECIFIC (Babak 5 ONLY): "Rumah Gadang with 11 levels of curved roof in Pagaruyung style" - hanya untuk foto Rumah Gadang tertentu
 
 Format response dalam JSON:
 {
+  "culture": "Nama budaya (Minangkabau/Jawa/Bali/dll)",
+  "mainObject": "Objek utama dalam foto",
   "title": "Judul cerita singkat (3-5 kata)",
   "chapters": [
     {
-      "title": "Nama Objek/Elemen Utama",
-      "content": "Deskripsi singkat objek (2-3 kalimat). Fokus pada bentuk, warna, ukuran yang bisa divisualisasikan 3D."
+      "title": "Judul Babak 1",
+      "content": "Narasi cerita babak 1 dalam Bahasa Indonesia (2-3 kalimat).",
+      "modelPrompt": "Generic cultural element 1, detailed English description for 3D model generation, include colors, shapes, materials, high quality 3D model"
     },
     {
-      "title": "Nama Elemen/Bagian Spesifik",
-      "content": "Deskripsi elemen khusus (2-3 kalimat). Jelaskan detail yang unik dan mudah dibuat 3D."
+      "title": "Judul Babak 2",
+      "content": "Narasi cerita babak 2 dalam Bahasa Indonesia (2-3 kalimat).",
+      "modelPrompt": "Generic cultural element 2, detailed English description for 3D model generation, include colors, shapes, materials, high quality 3D model"
     },
     {
-      "title": "Nama Elemen/Detail Lain",
-      "content": "Deskripsi detail tambahan (2-3 kalimat). Fokus pada ornamen atau aksesori yang terlihat."
+      "title": "Judul Babak 3",
+      "content": "Narasi cerita babak 3 dalam Bahasa Indonesia (2-3 kalimat).",
+      "modelPrompt": "Generic cultural element 3, detailed English description for 3D model generation, include colors, shapes, materials, high quality 3D model"
     },
     {
-      "title": "Fungsi dan Penggunaan",
-      "content": "Jelaskan bagaimana objek digunakan (2-3 kalimat). Konteks sederhana yang mudah dipahami."
+      "title": "Judul Babak 4",
+      "content": "Narasi cerita babak 4 dalam Bahasa Indonesia (2-3 kalimat).",
+      "modelPrompt": "Generic cultural element 4, detailed English description for 3D model generation, include colors, shapes, materials, high quality 3D model"
     },
     {
-      "title": "Makna dan Warisan",
-      "content": "Jelaskan nilai budaya (2-3 kalimat). Pesan moral yang ingin disampaikan."
+      "title": "Judul Babak 5",
+      "content": "Narasi cerita babak 5 dalam Bahasa Indonesia (2-3 kalimat).",
+      "modelPrompt": "SPECIFIC main object from photo, very detailed English description for 3D model generation, include all unique features, colors, architectural details, high quality 3D model"
     }
   ]
 }
 
-CONTOH BAIK (mudah divisualisasikan):
-- "Bangunan beratap tanduk" ✓
-- "Ukiran bermotif flora" ✓
-- "Pakaian dengan aksesoris emas" ✓
+PENTING - MODEL PROMPT REQUIREMENTS:
+1. BAHASA INGGRIS untuk semua modelPrompt
+2. DESKRIPTIF dan DETAIL (materials, colors, shapes, size)
+3. Akhiri dengan "high quality 3D model" atau "detailed 3D model"
+4. Babak 1-4 HARUS generic (buffalo, map, fabric, etc)
+5. Babak 5 HARUS spesifik ke objek utama foto
+6. Negative prompts akan ditambahkan otomatis oleh sistem
 
-CONTOH BURUK (sulit divisualisasikan):
-- "Filosofi kehidupan yang mendalam" ✗
-- "Semangat gotong royong masyarakat" ✗
+CONTOH BAGUS:
+Chapter 1: "Indonesian water buffalo with large curved horns, dark gray skin texture, muscular body, realistic animal, high quality 3D model"
+Chapter 5: "Traditional Minangkabau Rumah Gadang with multi-tiered curved roof resembling buffalo horns, intricate wood carvings with floral motifs, raised on wooden stilts, warm brown and gold colors, detailed Indonesian architecture, high quality 3D model"
 
-Pastikan:
-1. Bahasa Indonesia yang jelas dan mudah dipahami
-2. Setiap babak mendeskripsikan OBJEK FISIK yang konkret
-3. Total HARUS 5 babak, tidak lebih dan tidak kurang
-4. Judul babak SINGKAT (3-5 kata) dan merujuk pada objek
-5. Response HANYA JSON, tanpa markdown atau teks tambahan
-
-Berikan HANYA JSON.`;
+Pastikan response HANYA JSON tanpa markdown.`;
 
     const response = await fetch(url, {
       method: 'POST',
