@@ -13,6 +13,8 @@ export default function ARDebug2Page() {
   const [subtitleText, setSubtitleText] = useState('');
   const [currentNarrationText, setCurrentNarrationText] = useState('');
   const [logs, setLogs] = useState([]);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [overlayVisible, setOverlayVisible] = useState(false);
 
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
@@ -249,6 +251,43 @@ export default function ARDebug2Page() {
     };
     checkSupport();
   }, []);
+
+  // Viewport detection and responsive handling
+  useEffect(() => {
+    const updateViewport = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    window.addEventListener('orientationchange', updateViewport);
+
+    return () => {
+      window.removeEventListener('resize', updateViewport);
+      window.removeEventListener('orientationchange', updateViewport);
+    };
+  }, []);
+
+  // WebXR event handlers for overlay sync
+  useEffect(() => {
+    if (xrSessionRef.current) {
+      const handleVisibilityChange = () => {
+        setOverlayVisible(sessionActive);
+        addLog(`📱 Overlay visibility: ${sessionActive ? 'VISIBLE' : 'HIDDEN'}`);
+      };
+
+      xrSessionRef.current.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      return () => {
+        if (xrSessionRef.current) {
+          xrSessionRef.current.removeEventListener('visibilitychange', handleVisibilityChange);
+        }
+      };
+    }
+  }, [sessionActive]);
 
   // Initialize Three.js
   useEffect(() => {
@@ -660,14 +699,18 @@ export default function ARDebug2Page() {
     try {
       addLog('🚀 Starting AR session...');
       
-      // Get overlay element
+      // Get overlay element - try container first, then fallback to overlay
+      const overlayContainer = document.getElementById('ar-overlay-container');
       const overlayElement = document.getElementById('ar-overlay');
+      const targetOverlay = overlayContainer || overlayElement;
+      
+      addLog(`📱 Target overlay element: ${targetOverlay ? 'FOUND' : 'NOT FOUND'}`);
       
       // Configure session options with proper DOM overlay setup
       const sessionOptions = {
         requiredFeatures: ['hit-test'],
         optionalFeatures: ['dom-overlay', 'local'],
-        domOverlay: overlayElement ? { root: overlayElement } : undefined
+        domOverlay: targetOverlay ? { root: targetOverlay } : undefined
       };
       addLog(`Session options: ${JSON.stringify({requiredFeatures: sessionOptions.requiredFeatures, optionalFeatures: sessionOptions.optionalFeatures, hasDomOverlay: !!overlayElement})}`);
 
@@ -840,6 +883,7 @@ export default function ARDebug2Page() {
         }
         
         // Hide subtitle when AR session ends (handled by DOM overlay visibility)
+        setOverlayVisible(false);
       });
 
     } catch (error) {
@@ -861,14 +905,14 @@ export default function ARDebug2Page() {
           width: '100%',
           height: '100%',
           display: sessionActive ? 'block' : 'none',
-          zIndex: 0
+          zIndex: 1
         }}
       />
 
-      {/* AR Session Active Overlay with CLEAR VISUAL FEEDBACK */}
+      {/* Dedicated AR Overlay Container - Outside main component tree */}
       {sessionActive && (
         <div
-          id="ar-overlay"
+          id="ar-overlay-container"
           style={{
             position: 'fixed',
             top: 0,
@@ -876,15 +920,35 @@ export default function ARDebug2Page() {
             width: '100vw',
             height: '100vh',
             pointerEvents: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            zIndex: 9999,
+            zIndex: 10000,
             boxSizing: 'border-box',
             padding: '0',
-            margin: '0'
+            margin: '0',
+            transform: 'translateZ(0)', // Hardware acceleration
+            willChange: 'transform'
           }}
         >
+          {/* WebXR DOM Overlay Root */}
+          <div
+            id="ar-overlay"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              zIndex: 10001,
+              boxSizing: 'border-box',
+              padding: '0',
+              margin: '0',
+              opacity: overlayVisible ? 1 : 0,
+              transition: 'opacity 0.3s ease-in-out'
+            }}
+          >
           {/* Top status banner - ALWAYS VISIBLE */}
           <div style={{
             backgroundColor: surfaceFound ? 'rgba(34, 139, 34, 0.98)' : 'rgba(255, 140, 0, 0.98)',
@@ -1080,6 +1144,7 @@ export default function ARDebug2Page() {
             </button>
           </div>
         </div>
+      </div>
       )}
 
       {/* Regular UI */}
