@@ -53,7 +53,7 @@ export default function ARDebug2Page() {
     // 4. Perahu dihias kepala buaya/ular
     {
       model: '/models/rumahgadang.glb',
-      script: 'Rumah Gadang adalah rumah adat Minangkabau yang khas dengan atapnya yang melengkung seperti tanduk kerbau.',
+      script: ' Rumah Gadang adalah rumah adat Minangkabau yang khas dengan atapnya yang melengkung seperti tanduk kerbau.',
       scale: 0.3
     },
     // 5. Tongkang kerajaan
@@ -401,10 +401,10 @@ export default function ARDebug2Page() {
               setTimeout(reject, 2000); // Timeout after 2s
             });
             
-            // Draw circular avatar on the left - positioned 15% from left edge
+            // Draw circular avatar on the left - positioned to overlap subtitle border
             const avatarSize = 180; // Moderately larger size for mobile visibility
-            const avatarX = canvasWidth * 0.15; // Position 15% from left edge
-            const avatarY = canvas.height / 2; // Vertical center alignment
+            const avatarX = 100; // Moved further left to overlap subtitle box left border
+            const avatarY = canvas.height / 2;
             
             context.save();
             context.beginPath();
@@ -433,13 +433,12 @@ export default function ARDebug2Page() {
             context.fillText('🎙️', avatarX, canvas.height / 2);
           }
           
-          // Draw character name (optional) - positioned to the right of avatar
-          const narratorX = avatarX + avatarSize / 2 + 20; // 20px padding from avatar edge
+          // Draw character name (optional)
           context.fillStyle = '#FFC857';
           context.font = 'Bold 60px Arial'; // Dramatically larger font for mobile visibility
           context.textAlign = 'left';
           context.textBaseline = 'top';
-          context.fillText('Narrator', narratorX, 60);
+          context.fillText('Narrator', 240, 60);
           
           // Draw subtitle text (word-wrapped)
           context.fillStyle = '#FFFFFF';
@@ -447,7 +446,7 @@ export default function ARDebug2Page() {
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - (narratorX + 40); // Dynamic margin based on avatar position
+          const maxWidth = canvas.width - 280; // Increased margin for better text fitting
           const lineHeight = 80; // Increased line height for better readability
           const words = text.split(' ');
           let line = '';
@@ -456,8 +455,6 @@ export default function ARDebug2Page() {
           // Add debug logging for text rendering
           addLog(`📝 Rendering subtitle text: "${text}"`);
           addLog(`📏 Canvas dimensions: ${canvas.width}x${canvas.height}, maxWidth: ${maxWidth}`);
-          addLog(`👤 Avatar positioned at X: ${avatarX.toFixed(0)} (15% from left), Y: ${avatarY.toFixed(0)} (center)`);
-          addLog(`📝 Narrator text positioned at X: ${narratorX.toFixed(0)}`);
           
           for (let i = 0; i < words.length; i++) {
             const testLine = line + words[i] + ' ';
@@ -469,7 +466,7 @@ export default function ARDebug2Page() {
             }
             
             if (metrics.width > maxWidth && i > 0) {
-              context.fillText(line, narratorX, y); // Start at same x-coordinate as Narrator text
+              context.fillText(line, 240, y); // Start at same x-coordinate as Narrator text
               addLog(`✅ Drew line: "${line}" at y=${y}`);
               line = words[i] + ' ';
               y += lineHeight;
@@ -480,7 +477,7 @@ export default function ARDebug2Page() {
           
           // Draw the last line
           if (line.trim() !== '') {
-            context.fillText(line, narratorX, y);
+            context.fillText(line, 240, y);
             addLog(`✅ Drew final line: "${line}" at y=${y}`);
           }
           
