@@ -25,6 +25,7 @@ export default function ARDebug2Page() {
   const autoPlayTimerRef = useRef(null);
   const currentSceneRef = useRef(0);
   const hasSpokenRef = useRef(false);
+  const firstPlacementCompletedRef = useRef(false);
   const micIndicatorRef = useRef(null);
 
   // Scenes with models and scripts
@@ -433,7 +434,6 @@ export default function ARDebug2Page() {
               line = testLine;
             }
           }
-          context.fillText(line, 135, y);
           
           const texture = new THREE.CanvasTexture(canvas);
           texture.needsUpdate = true;
@@ -601,8 +601,8 @@ export default function ARDebug2Page() {
                 
                 // Status indicator removed - no need to update
                 
-                // Show scanning text
-                if (textSprites?.scanning) {
+                // Show scanning text only before first successful placement
+                if (textSprites?.scanning && !hasSpokenRef.current) {
                   textSprites.scanning.visible = true;
                 }
                 
@@ -613,10 +613,8 @@ export default function ARDebug2Page() {
                 
                 if (lastSurfaceState) {
                   addLog('⚠️ Surface lost, keep scanning...');
-                  // Hide subtitle when surface is lost
-                  if (micIndicatorRef.current) {
-                    micIndicatorRef.current.visible = false;
-                  }
+                  // Keep subtitle visible after first successful placement
+                  // Don't hide subtitle during subsequent scanning
                   lastSurfaceState = false;
                 }
                 setSurfaceFound(false);
@@ -630,7 +628,8 @@ export default function ARDebug2Page() {
 
             // Position and animate subtitle indicator
             const subtitleIndicator = micIndicatorRef.current;
-            if (subtitleIndicator && camera && subtitleIndicator.visible) {
+            // Keep subtitle visible after first successful placement
+            if (subtitleIndicator && camera && (subtitleIndicator.visible || firstPlacementCompletedRef.current)) {
               const cameraDirection = new THREE.Vector3();
               camera.getWorldDirection(cameraDirection);
               const subtitlePosition = camera.position.clone();
@@ -785,6 +784,7 @@ export default function ARDebug2Page() {
         // Start speech on first placement only
         if (isFirstPlacement && !hasSpokenRef.current) {
           hasSpokenRef.current = true;
+          firstPlacementCompletedRef.current = true;
           addLog('🎤 Starting narration sequence...');
           speakText(scenes[currentSceneRef.current].script, currentSceneRef.current);
         }
