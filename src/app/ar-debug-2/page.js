@@ -14,24 +14,25 @@ export default function ARDebug2Page() {
         const loadModelViewer = async () => {
             try {
                 await import('@google/model-viewer');
-                addLog('✅ Model-viewer loaded');
+                // addLog('✅ Model-viewer loaded');
 
                 // Wait for the component to be defined
                 if (window.customElements) {
                     await window.customElements.whenDefined('model-viewer');
-                    addLog('✅ Model-viewer custom element defined');
+                    // addLog('✅ Model-viewer custom element defined');
                 }
 
                 // Check AR support
                 setTimeout(() => {
                     if (modelViewerRef.current) {
                         const canActivateAR = modelViewerRef.current.canActivateAR;
-                        addLog(`AR Support: ${canActivateAR ? 'YES ✅' : 'NO ❌'}`);
+                        // addLog(`AR Support: ${canActivateAR ? 'YES ✅' : 'NO ❌'}`);
                         setArSupported(canActivateAR);
                     }
                 }, 1000);
             } catch (error) {
-                addLog(`❌ Error loading model-viewer: ${error.message}`);
+                // addLog(`❌ Error loading model-viewer: ${error.message}`);
+                // Error handling remains intact but debug output is disabled
             }
         };
 
@@ -45,14 +46,14 @@ export default function ARDebug2Page() {
             scale: '1 1 1'
         },
         {
-            model: '/models/crown.glb',
-            script: 'Seiring waktu, perahu jalur menjadi tongkang kerajaan yang megah untuk para bangsawan dan raja.',
-            scale: '0.4 0.4 0.4'
+            model: '/models/banana.glb',
+            script: 'Jalur digunakan untuk mengangkut hasil bumi seperti buah-buahan lokal dan tebu ke hilir sungai.',
+            scale: '0.3 0.3 0.3'
         },
         {
-            model: '/models/globe.glb',
-            script: 'Setelah kemerdekaan Indonesia, Pacu Jalur menjadi festival rakyat untuk merayakan Hari Kemerdekaan Republik Indonesia.',
-            scale: '0.6 0.6 0.6'
+            model: '/models/cartoon_crocodile_croco-roco.glb',
+            script: 'Perahu memanjang ini dihias dengan ornamen kepala buaya atau ular, melambangkan budaya setempat.',
+            scale: '0.3 0.3 0.3'
         }
     ];
 
@@ -64,7 +65,7 @@ export default function ARDebug2Page() {
     const handleNextModel = () => {
         const nextScene = (currentScene + 1) % scenes.length;
         setCurrentScene(nextScene);
-        addLog(`Switched to scene ${nextScene + 1}: ${scenes[nextScene].model}`);
+        // addLog(`Switched to scene ${nextScene + 1}: ${scenes[nextScene].model}`);
     };
 
     const speakText = (text) => {
@@ -133,7 +134,7 @@ export default function ARDebug2Page() {
                 scale={scenes[currentScene].scale}      // ADD THIS
                 style={{ width: '100%', height: '100%' }}
                 ref={modelViewerRef}
-                onLoad={() => addLog('Model loaded')}
+                // onLoad={() => addLog('Model loaded')}
             >
                 <button slot="ar-button" id="ar-button">
                     View in your space
@@ -200,15 +201,15 @@ export default function ARDebug2Page() {
                 </div>
             </model-viewer>
 
-            {/* Debug info */}
-            <div className="absolute top-16 right-4 bg-yellow-500 text-black p-2 rounded text-xs z-50">
+            {/* Debug info - Disabled */}
+            {/* <div className="absolute top-16 right-4 bg-yellow-500 text-black p-2 rounded text-xs z-50">
                 AR: {arSupported ? '✅' : '❌'}
-            </div>
+            </div> */}
 
-            {/* Logs Overlay */}
-            <div className="absolute top-4 left-4 bg-black/80 text-green-400 p-4 rounded-lg max-w-xs max-h-48 overflow-y-auto text-xs font-mono pointer-events-none z-50">
+            {/* Logs Overlay - Disabled */}
+            {/* <div className="absolute top-4 left-4 bg-black/80 text-green-400 p-4 rounded-lg max-w-xs max-h-48 overflow-y-auto text-xs font-mono pointer-events-none z-50">
                 {logs.map((log, i) => <div key={i}>{log}</div>)}
-            </div>
+            </div> */}
         </div>
     );
 }
