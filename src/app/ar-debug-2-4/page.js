@@ -39,13 +39,13 @@ export default function ARDebug2Page() {
     {
       model: '/models/crown.glb',
       script: 'Seiring waktu, perahu jalur menjadi tongkang kerajaan yang megah untuk para bangsawan dan raja. Pada masa penjajahan Belanda, Pacu Jalur juga diadakan untuk memperingati hari lahir Ratu Wilhelmina.',
-      scale: 0.4
+      scale: 0.3
     },
     // 6. Pacu Jalur mendunia & kemerdekaan
     {
       model: '/models/globe.glb',
       script: 'Setelah kemerdekaan Indonesia, Pacu Jalur menjadi festival rakyat untuk merayakan Hari Kemerdekaan Republik Indonesia. Kini, Pacu Jalur telah mendunia dan menjadi kebanggaan budaya Indonesia di mata dunia.',
-      scale: 0.5
+      scale: 0.3
     }
   ];
 

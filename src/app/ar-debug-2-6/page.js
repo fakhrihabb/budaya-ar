@@ -33,7 +33,7 @@ export default function ARDebug2Page() {
     {
       model: '/models/globe.glb',
       script: 'Setelah kemerdekaan Indonesia, Pacu Jalur menjadi festival rakyat untuk merayakan Hari Kemerdekaan Republik Indonesia. Kini, Pacu Jalur telah mendunia dan menjadi kebanggaan budaya Indonesia di mata dunia.',
-      scale: 0.5
+      scale: 0.3
     }
   ];
 

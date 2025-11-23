@@ -584,7 +584,7 @@ export default function ARBPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <a href="/" className="text-sm font-medium transition" style={{color: '#473C8B'}}>
-                    ← Kembali ke Home
+                    ← Home
                   </a>
                 </div>
               </div>
