@@ -663,29 +663,15 @@ export default function ARDebug2Page() {
       // Get overlay element
       const overlayElement = document.getElementById('ar-overlay');
       
-      // Configure session options with proper DOM overlay setup
       const sessionOptions = {
         requiredFeatures: ['hit-test'],
-        optionalFeatures: ['dom-overlay', 'local'],
+        optionalFeatures: ['dom-overlay'],
         domOverlay: overlayElement ? { root: overlayElement } : undefined
       };
       addLog(`Session options: ${JSON.stringify({requiredFeatures: sessionOptions.requiredFeatures, optionalFeatures: sessionOptions.optionalFeatures, hasDomOverlay: !!overlayElement})}`);
 
-      let session;
-      try {
-        session = await navigator.xr.requestSession('immersive-ar', sessionOptions);
-        addLog('✅ AR session created with DOM overlay!');
-      } catch (domOverlayError) {
-        addLog(`⚠️ DOM overlay failed: ${domOverlayError.message}`);
-        // Fallback without DOM overlay
-        const fallbackOptions = {
-          requiredFeatures: ['hit-test'],
-          optionalFeatures: ['local']
-        };
-        session = await navigator.xr.requestSession('immersive-ar', fallbackOptions);
-        addLog('✅ AR session created without DOM overlay (fallback)');
-      }
-      
+      const session = await navigator.xr.requestSession('immersive-ar', sessionOptions);
+      addLog('✅ AR session created!');
       xrSessionRef.current = session;
 
       addLog('🎨 Setting session on Three.js renderer...');
@@ -776,10 +762,6 @@ export default function ARDebug2Page() {
       setSessionActive(true);
       setIsScanning(true);
       setSurfaceFound(false);
-      
-      // Add AR-active class to body for global styles
-      document.body.classList.add('ar-active');
-      
       addLog('🎉 AR Session fully active!');
       addLog('📡 Scanning for surfaces...');
       addLog('🟠 Look for ORANGE indicator in AR view');
@@ -793,10 +775,6 @@ export default function ARDebug2Page() {
         setIsScanning(false);
         setSurfaceFound(false);
         setModelPlaced(false);
-        
-        // Remove AR-active class from body
-        document.body.classList.remove('ar-active');
-        
         xrSessionRef.current = null;
         hitTestSourceRef.current = null;
         
@@ -873,16 +851,13 @@ export default function ARDebug2Page() {
             position: 'fixed',
             top: 0,
             left: 0,
-            width: '100vw',
-            height: '100vh',
+            width: '100%',
+            height: '100%',
             pointerEvents: 'none',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            zIndex: 9999,
-            boxSizing: 'border-box',
-            padding: '0',
-            margin: '0'
+            zIndex: 9999
           }}
         >
           {/* Top status banner - ALWAYS VISIBLE */}
@@ -949,54 +924,40 @@ export default function ARDebug2Page() {
           {(surfaceFound || modelPlaced) && (
             <div style={{
               position: 'fixed',
-              bottom: '5vh',
+              bottom: '20px',
               left: '50%',
               transform: 'translateX(-50%)',
-              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
               color: 'white',
-              padding: 'clamp(12px, 3vw, 20px) clamp(20px, 5vw, 30px)',
-              borderRadius: 'clamp(10px, 2vw, 15px)',
-              maxWidth: 'clamp(300px, 85vw, 600px)',
-              width: 'auto',
+              padding: '15px 25px',
+              borderRadius: '15px',
+              maxWidth: '90%',
               textAlign: 'center',
-              fontSize: 'clamp(14px, 3vw, 18px)',
+              fontSize: '16px',
               fontWeight: '600',
               zIndex: 9998,
-              border: '2px solid rgba(255, 255, 255, 0.4)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
               pointerEvents: 'none',
               display: 'flex',
               alignItems: 'center',
-              gap: 'clamp(8px, 2vw, 15px)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              willChange: 'transform'
+              gap: '10px'
             }}>
               <img
                 src="/2.svg"
                 alt="Narrator"
                 style={{
-                  width: 'clamp(30px, 5vw, 45px)',
-                  height: 'clamp(30px, 5vw, 45px)',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
-                  border: '2px solid white',
-                  flexShrink: 0,
-                  backgroundColor: 'rgba(255,255,255,0.1)'
+                  border: '2px solid white'
                 }}
               />
-              <div style={{ textAlign: 'left', flex: 1 }}>
-                <div style={{
-                  fontSize: 'clamp(12px, 2.5vw, 14px)',
-                  color: '#FFC857',
-                  marginBottom: '4px',
-                  fontWeight: '700'
-                }}>
+              <div>
+                <div style={{ fontSize: '14px', color: '#FFC857', marginBottom: '4px' }}>
                   Narrator {isSpeaking && '🔊'}
                 </div>
-                <div style={{
-                  lineHeight: '1.4',
-                  wordBreak: 'break-word'
-                }}>
+                <div>
                   {isSpeaking && currentNarrationText ? currentNarrationText :
                    subtitleText || (surfaceFound && !modelPlaced ? 'Surface found! Tap the screen to place the model' : 'Model placed! Starting narration...')}
                 </div>
@@ -1197,53 +1158,15 @@ export default function ARDebug2Page() {
         </>
       )}
 
-      <style jsx global>{`
-        /* WebXR Overlay Global Styles */
-        * {
-          box-sizing: border-box;
-        }
-        
-        #ar-overlay {
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          pointer-events: none !important;
-          z-index: 9999 !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          transform: none !important;
-        }
-        
-        #ar-overlay > * {
-          pointer-events: auto !important;
-        }
-        
+      <style jsx>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        
         @keyframes popIn {
           0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
           50% { transform: translate(-50%, -50%) scale(1.1); }
           100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-        
-        /* Ensure consistent positioning across devices */
-        @media (max-width: 768px) {
-          #ar-overlay {
-            transform: translate3d(0, 0, 0) !important;
-          }
-        }
-        
-        /* Prevent scrollbars in AR mode */
-        body.ar-active {
-          overflow: hidden;
-          position: fixed;
-          width: 100%;
-          height: 100%;
         }
       `}</style>
     </div>
