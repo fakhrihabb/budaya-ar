@@ -41,13 +41,15 @@ STRATEGI 3D MODEL:
   * Contoh Bali: gamelan instrument, traditional offerings, Balinese map, traditional dancer
   * Contoh Jawa: wayang puppet, batik pattern, traditional map, gamelan
 
-- Babak 5: SPECIFIC to the main object in the photo
-  * Jika foto Rumah Gadang → "Traditional Minangkabau house with curved buffalo horn roof"
-  * Jika foto Tari Pendet → "Balinese Pendet dancer in traditional costume"
+- Babak 5: VERY SPECIFIC and DETAILED to the main object in the photo
+  * PENTING: Analyze foto dengan SANGAT DETAIL untuk chapter 5!
+  * Jika foto Rumah Gadang → "Traditional Minangkabau Rumah Gadang with multi-tiered curved roof resembling buffalo horns, intricate wood carvings with floral motifs, raised on wooden stilts, warm brown and gold colors, detailed Indonesian architecture, high quality 3D model"
+  * Jika foto Tari Pendet → "Balinese Pendet dancer in traditional yellow costume with golden accessories, graceful hand gesture, flower offerings, detailed traditional Balinese dance pose, high quality 3D model"
+  * Describe: architecture details, colors, materials, ornaments, shapes, size, unique features
 
 CONTOH GENERIC vs SPECIFIC:
-✓ GENERIC (Babak 1-4): "Indonesian water buffalo with curved horns" - bisa dipakai untuk berbagai cerita Minang
-✗ SPECIFIC (Babak 5 ONLY): "Rumah Gadang with 11 levels of curved roof in Pagaruyung style" - hanya untuk foto Rumah Gadang tertentu
+✓ GENERIC (Babak 1-4): "Indonesian water buffalo with curved horns, dark gray skin, muscular body" - simple, bisa reuse
+✗ SPECIFIC (Babak 5 ONLY): "Traditional Minangkabau Rumah Gadang with 11 gonjong peaks resembling buffalo horns, intricate red and black exterior with gold accents, ornate wood carvings showing traditional Minang floral motifs on pillars and beams, raised 2 meters on wooden stilts, warm brown teak wood structure" - SANGAT DETAIL berdasarkan foto!
 
 Format response dalam JSON:
 {

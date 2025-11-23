@@ -14,7 +14,9 @@ import {
 export async function POST(request) {
   try {
     const {
+      type = 'text_to_model', // 'text_to_model' or 'image_to_model'
       prompt,
+      imageBase64,
       title = '',
       content = '',
       artStyle = 'low-poly', // Changed to low-poly untuk hemat credit
@@ -22,6 +24,7 @@ export async function POST(request) {
       useCache = true
     } = await request.json();
 
+    // Validate prompt (always required now, even for "image_to_model" type)
     if (!prompt) {
       return NextResponse.json(
         { error: 'Prompt tidak ditemukan' },
@@ -81,23 +84,26 @@ export async function POST(request) {
       );
     }
 
-    console.log('Creating NEW 3D model with Tripo AI...');
+    console.log(`Creating NEW 3D model with Tripo AI (${type})...`);
     console.log('Prompt:', prompt.substring(0, 100));
     console.log('Style:', artStyle);
 
-    // Step 1: Create text-to-3D task
+    // Always use text-to-3D (more reliable than image upload)
+    // For chapter 5, Gemini will provide very detailed prompt based on photo analysis
+    const tripoPayload = {
+      type: 'text_to_model',
+      prompt: prompt,
+      negative_prompt: negativePrompt,
+      face_limit: type === 'image_to_model' ? 20000 : 10000 // Higher poly for specific models (ch5)
+    };
+
     const createResponse = await fetch('https://api.tripo3d.ai/v2/openapi/task', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        type: 'text_to_model',
-        prompt: prompt,
-        negative_prompt: negativePrompt,
-        // Tripo doesn't use art_style in the same way, but we can add it to the prompt
-      })
+      body: JSON.stringify(tripoPayload)
     });
 
     if (!createResponse.ok) {

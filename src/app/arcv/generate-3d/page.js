@@ -72,20 +72,28 @@ export default function Generate3DPage() {
 
         console.log(`🚀 Generating model ${index + 1}:`, model.title);
 
+        // Chapter 5 (index 4) uses higher poly count for detailed specific model
+        const isLastChapter = index === 4; // Chapter 5 is index 4
+
+        const requestBody = {
+          type: isLastChapter ? 'image_to_model' : 'text_to_model', // Flag for poly count
+          prompt: model.prompt, // Always send prompt (Gemini analyzed photo for ch5)
+          title: model.title,
+          content: model.content || model.prompt,
+          artStyle: 'low-poly',
+          negativePrompt: 'low quality, blurry, distorted, deformed, ugly',
+          useCache: !isLastChapter // Only use cache for generic models (ch 1-4)
+        };
+
+        console.log(`📝 Chapter ${index + 1}: ${isLastChapter ? 'DETAILED specific model (high poly)' : 'Generic model (low poly, cached)'}`);
+
         // Call API to create 3D model task (with cache support)
         const response = await fetch('/api/generate-3d-model', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            prompt: model.prompt, // Use AI-generated modelPrompt directly
-            title: model.title,
-            content: model.content || model.prompt, // Use narrative content for cache matching
-            artStyle: 'low-poly', // Low-poly untuk hemat credit
-            negativePrompt: 'low quality, blurry, distorted, deformed, ugly',
-            useCache: true // Enable cache
-          })
+          body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
