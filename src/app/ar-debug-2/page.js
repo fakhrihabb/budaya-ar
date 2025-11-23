@@ -75,7 +75,7 @@ export default function ARDebug2Page() {
     console.log(logMsg);
   };
 
-  // Update subtitle text dynamically
+  // Update subtitle text dynamically with persistent visibility
   const updateSubtitleText = async (text) => {
     if (!rendererRef.current?.createSubtitleSprite || !micIndicatorRef.current) return;
     
@@ -87,12 +87,21 @@ export default function ARDebug2Page() {
       
       // Create new subtitle with updated text
       const newSubtitle = await rendererRef.current.createSubtitleSprite(text);
-      newSubtitle.visible = micIndicatorRef.current.visible; // Maintain previous visibility state
+      newSubtitle.visible = true; // Always visible when persistent mode is active
       rendererRef.current.scene.add(newSubtitle);
       micIndicatorRef.current = newSubtitle;
-      addLog('✅ Subtitle text updated');
+      setSubtitlePersistent(true); // Mark subtitle as persistent
+      addLog('✅ Subtitle text updated and made persistent');
     } catch (e) {
       addLog('⚠️ Failed to update subtitle: ' + e.message);
+    }
+  };
+
+  // Show/hide subtitle based on persistent state
+  const toggleSubtitleVisibility = (visible) => {
+    if (micIndicatorRef.current) {
+      micIndicatorRef.current.visible = visible;
+      addLog(visible ? '✅ Subtitle shown' : '🚫 Subtitle hidden');
     }
   };
 
@@ -773,11 +782,10 @@ export default function ARDebug2Page() {
         // Show subtitle when model is placed
         if (isFirstPlacement && !hasSpokenRef.current) {
           updateSubtitleText('Model placed! Starting narration...');
+          toggleSubtitleVisibility(true);
         } else {
           updateSubtitleText(`${sceneName} placed! You can place again to replace it.`);
-        }
-        if (micIndicatorRef.current) {
-          micIndicatorRef.current.visible = true;
+          toggleSubtitleVisibility(true);
         }
         
         // Hide confirmation after 2 seconds
