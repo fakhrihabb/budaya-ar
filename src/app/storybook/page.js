@@ -1,16 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Sparkles, Send, Map, Lightbulb, Wand2, Shield, Moon, PartyPopper, Loader2 } from 'lucide-react';
+import { BookOpen, Sparkles, Send, Map, Lightbulb, Wand2, Shield, Moon, PartyPopper, Loader2, Palette, Paintbrush, Pen, Image } from 'lucide-react';
 
 export default function StorybookPage() {
   const router = useRouter();
   const [topic, setTopic] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Memulai...');
+  const [progress, setProgress] = useState(0);
+  const [storybookId, setStorybookId] = useState(null);
 
-  // Dummy moods for selection with lucide-react icons
+  // Moods for selection
   const moods = [
     { id: 'adventure', name: 'Petualangan', icon: Map, color: '#FFC857', neon: '#FFD700' },
     { id: 'wisdom', name: 'Kebijaksanaan', icon: Lightbulb, color: '#D4A373', neon: '#F4A460' },
@@ -19,6 +23,41 @@ export default function StorybookPage() {
     { id: 'mysterious', name: 'Misterius', icon: Moon, color: '#6366f1', neon: '#A78BFA' },
     { id: 'joyful', name: 'Riang', icon: PartyPopper, color: '#ec4899', neon: '#F472B6' },
   ];
+
+  // Art styles for selection
+  const styles = [
+    { id: 'pixar-3d', name: 'Pixar 3D', icon: Sparkles, color: '#FF6B6B', description: 'Gaya animasi 3D seperti Pixar' },
+    { id: 'color-paint', name: 'Color Paint', icon: Palette, color: '#4ECDC4', description: 'Lukisan berwarna cerah' },
+    { id: 'watercolor', name: 'Watercolor', icon: Paintbrush, color: '#95E1D3', description: 'Gaya cat air lembut' },
+    { id: 'anime', name: 'Anime', icon: Sparkles, color: '#F38181', description: 'Gaya ilustrasi anime Jepang' },
+    { id: 'flat-illustration', name: 'Flat Illustration', icon: Image, color: '#AA96DA', description: 'Ilustrasi datar modern' },
+    { id: 'sketch', name: 'Sketch', icon: Pen, color: '#FCBAD3', description: 'Gaya sketsa pensil' },
+  ];
+
+  // Poll for storybook status
+  useEffect(() => {
+    if (!storybookId || !isLoading) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/storybook/status/${storybookId}`);
+        const data = await response.json();
+
+        setProgress(data.progress || 0);
+        setLoadingMessage(data.message || 'Memproses...');
+
+        if (data.status === 'completed') {
+          clearInterval(pollInterval);
+          setIsLoading(false);
+          router.push(`/storybook/my/${storybookId}`);
+        }
+      } catch (error) {
+        console.error('Error polling status:', error);
+      }
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
+  }, [storybookId, isLoading, router]);
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -29,15 +68,52 @@ export default function StorybookPage() {
       alert('Silakan pilih mood cerita!');
       return;
     }
-    
-    // Show loading state
+    if (!selectedStyle) {
+      alert('Silakan pilih style visual!');
+      return;
+    }
+
     setIsLoading(true);
-    
-    // Simulate loading for 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Redirect to the story page with the fixed ID
-    router.push('/storybook/my/0debe010-4dfc-452b-bdce-caaca077d3c0');
+    setLoadingMessage('Memulai pembuatan storybook...');
+    setProgress(5);
+
+    try {
+      // Step 1: Create storybook (POST)
+      const createResponse = await fetch('/api/storybook/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, mood: selectedMood, style: selectedStyle })
+      });
+
+      const createData = await createResponse.json();
+
+      if (!createData.success) {
+        throw new Error('Failed to start storybook creation');
+      }
+
+      setStorybookId(createData.storybookId);
+      setProgress(10);
+      setLoadingMessage('Membuat cerita...');
+
+      // Step 2: Trigger the full generation (PUT)
+      fetch('/api/storybook/create', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storybookId: createData.storybookId,
+          topic,
+          mood: selectedMood,
+          style: selectedStyle
+        })
+      }).catch(error => {
+        console.error('Background generation error:', error);
+      });
+
+    } catch (error) {
+      console.error('Error generating storybook:', error);
+      alert('Terjadi kesalahan saat membuat storybook. Silakan coba lagi.');
+      setIsLoading(false);
+    }
   };
 
   const handleQuickSuggestion = () => {
@@ -104,7 +180,7 @@ export default function StorybookPage() {
             <div className="absolute inset-0 opacity-30" style={{
               background: 'radial-gradient(circle at 50% 0%, rgba(138, 127, 216, 0.2), transparent 70%)'
             }} />
-            
+
             <div className="relative z-10">
               <div className="flex justify-center mb-4">
                 <div className="relative">
@@ -123,11 +199,27 @@ export default function StorybookPage() {
               }}>
                 Membuat Storybook...
               </h3>
-              <p className="text-sm" style={{
+              <p className="text-sm mb-4" style={{
                 color: '#D4A373',
                 textShadow: '0 0 8px rgba(212, 163, 115, 0.3)'
               }}>
-                AI sedang menyiapkan cerita edukatif untuk Anda
+                {loadingMessage}
+              </p>
+
+              {/* Progress Bar */}
+              <div className="w-full h-2 rounded-full overflow-hidden" style={{
+                background: 'rgba(71, 60, 139, 0.1)'
+              }}>
+                <div className="h-full transition-all duration-500 rounded-full" style={{
+                  width: `${progress}%`,
+                  background: 'linear-gradient(90deg, #473C8B 0%, #8A7FD8 100%)',
+                  boxShadow: '0 0 10px rgba(138, 127, 216, 0.5)'
+                }} />
+              </div>
+              <p className="text-xs mt-2" style={{
+                color: '#8B7355'
+              }}>
+                {progress}%
               </p>
             </div>
           </div>
@@ -361,41 +453,143 @@ export default function StorybookPage() {
           </div>
         </div>
 
+        {/* Style Selection Section */}
+        <div className="relative rounded-3xl p-6 overflow-hidden group" style={{
+          background: 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(20px)',
+          border: '2px solid rgba(255, 200, 87, 0.3)',
+          boxShadow: `0 8px 32px rgba(0, 0, 0, 0.08),
+                     inset 0 0 20px rgba(255, 200, 87, 0.05)`
+        }}>
+          {/* Animated border glow */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+            background: 'linear-gradient(45deg, transparent, rgba(255, 200, 87, 0.15), transparent)',
+            animation: 'borderGlow 3s linear infinite'
+          }} />
+
+          <label className="block mb-4 relative z-10">
+            <span className="text-lg font-semibold" style={{
+              color: '#1B1B1E',
+              textShadow: '0 0 8px rgba(255, 200, 87, 0.2)'
+            }}>
+              Pilih Style Visual
+            </span>
+            <span className="text-sm ml-2" style={{
+              color: '#8B7355',
+              textShadow: '0 0 5px rgba(212, 163, 115, 0.2)'
+            }}>
+              Bagaimana tampilan ilustrasinya?
+            </span>
+          </label>
+
+          <div className="grid grid-cols-2 gap-3 relative z-10">
+            {styles.map((styleItem) => {
+              const IconComponent = styleItem.icon;
+              const isSelected = selectedStyle === styleItem.id;
+              return (
+                <button
+                  key={styleItem.id}
+                  onClick={() => setSelectedStyle(styleItem.id)}
+                  className="relative p-4 rounded-2xl border-2 transition-all duration-300 overflow-hidden group/style"
+                  style={{
+                    borderColor: isSelected ? styleItem.color : `${styleItem.color}40`,
+                    background: isSelected
+                      ? `${styleItem.color}20`
+                      : 'rgba(255, 255, 255, 0.4)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: isSelected
+                      ? `0 0 30px ${styleItem.color}50, inset 0 0 20px ${styleItem.color}20`
+                      : '0 4px 10px rgba(0, 0, 0, 0.05)',
+                    transform: isSelected ? 'scale(1.05)' : 'scale(1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = `${styleItem.color}70`;
+                      e.currentTarget.style.boxShadow = `0 0 20px ${styleItem.color}35`;
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = `${styleItem.color}40`;
+                      e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.05)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }
+                  }}
+                >
+                  {/* Glow effect on hover */}
+                  <div className="absolute inset-0 opacity-0 group-hover/style:opacity-100 transition-opacity duration-300" style={{
+                    background: `radial-gradient(circle at center, ${styleItem.color}15, transparent 70%)`
+                  }} />
+
+                  {/* Pulse animation when selected */}
+                  {isSelected && (
+                    <div className="absolute inset-0 animate-ping opacity-15" style={{
+                      background: `radial-gradient(circle, ${styleItem.color}, transparent 70%)`
+                    }} />
+                  )}
+
+                  <div className="relative z-10">
+                    <IconComponent
+                      className="w-8 h-8 mx-auto mb-2"
+                      style={{
+                        color: styleItem.color,
+                        filter: isSelected ? `drop-shadow(0 0 8px ${styleItem.color}80)` : 'none'
+                      }}
+                    />
+                    <div className="text-sm font-semibold mb-1" style={{
+                      color: '#1B1B1E',
+                      textShadow: isSelected ? `0 0 8px ${styleItem.color}40` : 'none'
+                    }}>
+                      {styleItem.name}
+                    </div>
+                    <div className="text-xs" style={{
+                      color: '#8B7355'
+                    }}>
+                      {styleItem.description}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Generate Button */}
         <button
           onClick={handleGenerate}
-          disabled={!topic.trim() || !selectedMood || isLoading}
+          disabled={!topic.trim() || !selectedMood || !selectedStyle || isLoading}
           className={`relative w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 overflow-hidden group ${
-            !topic.trim() || !selectedMood || isLoading
+            !topic.trim() || !selectedMood || !selectedStyle || isLoading
               ? 'opacity-50 cursor-not-allowed'
               : ''
           }`}
           style={{
-            background: !topic.trim() || !selectedMood || isLoading
+            background: !topic.trim() || !selectedMood || !selectedStyle || isLoading
               ? 'rgba(71, 60, 139, 0.2)'
               : 'linear-gradient(135deg, #473C8B 0%, #6B5FBD 100%)',
             color: 'white',
             border: '2px solid rgba(138, 127, 216, 0.4)',
-            boxShadow: !topic.trim() || !selectedMood || isLoading
+            boxShadow: !topic.trim() || !selectedMood || !selectedStyle || isLoading
               ? 'none'
               : '0 0 30px rgba(138, 127, 216, 0.35), inset 0 0 20px rgba(138, 127, 216, 0.1)',
             textShadow: '0 0 8px rgba(255, 255, 255, 0.4)'
           }}
           onMouseEnter={(e) => {
-            if (topic.trim() && selectedMood && !isLoading) {
+            if (topic.trim() && selectedMood && selectedStyle && !isLoading) {
               e.currentTarget.style.boxShadow = '0 0 40px rgba(138, 127, 216, 0.5), inset 0 0 30px rgba(138, 127, 216, 0.15)';
               e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
             }
           }}
           onMouseLeave={(e) => {
-            if (topic.trim() && selectedMood && !isLoading) {
+            if (topic.trim() && selectedMood && selectedStyle && !isLoading) {
               e.currentTarget.style.boxShadow = '0 0 30px rgba(138, 127, 216, 0.35), inset 0 0 20px rgba(138, 127, 216, 0.1)';
               e.currentTarget.style.transform = 'translateY(0) scale(1)';
             }
           }}
         >
           {/* Animated gradient overlay */}
-          {topic.trim() && selectedMood && !isLoading && (
+          {topic.trim() && selectedMood && selectedStyle && !isLoading && (
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
               background: 'linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.15), transparent)',
               animation: 'shimmer 2s infinite'
