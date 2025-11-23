@@ -399,8 +399,8 @@ export default function ARDebug2Page() {
             });
             
             // Draw circular avatar on the left
-            const avatarSize = 180; // Moderately larger size for mobile visibility
-            const avatarX = 140; // Adjusted position for larger canvas
+            const avatarSize = 160; // Much larger size for better visibility
+            const avatarX = 120; // Adjusted position for larger canvas
             const avatarY = canvas.height / 2;
             
             context.save();
@@ -424,7 +424,7 @@ export default function ARDebug2Page() {
             context.fill();
             
             context.fillStyle = '#FFFFFF';
-            context.font = 'Bold 80px Arial'; // Moderately larger font for mobile visibility
+            context.font = 'Bold 70px Arial'; // Much larger font for better visibility
             context.textAlign = 'center';
             context.textBaseline = 'middle';
             context.fillText('🎙️', avatarX, canvas.height / 2);
@@ -432,22 +432,22 @@ export default function ARDebug2Page() {
           
           // Draw character name (optional)
           context.fillStyle = '#FFC857';
-          context.font = 'Bold 60px Arial'; // Dramatically larger font for mobile visibility
+          context.font = 'Bold 40px Arial'; // Much larger font for better visibility
           context.textAlign = 'left';
           context.textBaseline = 'top';
-          context.fillText('Narrator', 280, 60);
+          context.fillText('Narrator', 220, 40);
           
           // Draw subtitle text (word-wrapped)
           context.fillStyle = '#FFFFFF';
-          context.font = '54px Arial'; // Dramatically larger font for mobile readability
+          context.font = '36px Arial'; // Much larger font for better visibility
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - 400; // Adjusted text area for larger canvas
-          const lineHeight = 72; // Dramatically larger line height for better readability
+          const maxWidth = canvas.width - 280; // Adjusted text area for larger canvas
+          const lineHeight = 48; // Much larger line height for better readability
           const words = text.split(' ');
           let line = '';
-          let y = 150; // Adjusted starting position for larger canvas
+          let y = 100; // Adjusted starting position for larger canvas
           
           for (let i = 0; i < words.length; i++) {
             const testLine = line + words[i] + ' ';
