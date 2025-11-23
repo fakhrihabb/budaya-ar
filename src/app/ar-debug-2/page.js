@@ -416,7 +416,7 @@ export default function ARDebug2Page() {
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - 360; // Adjusted text area for moved avatar
+          const maxWidth = canvas.width - 260; // Full width from Narrator position to right edge
           const lineHeight = 72; // Dramatically larger line height for better readability
           const words = text.split(' ');
           let line = '';
@@ -426,7 +426,7 @@ export default function ARDebug2Page() {
             const testLine = line + words[i] + ' ';
             const metrics = context.measureText(testLine);
             if (metrics.width > maxWidth && i > 0) {
-              context.fillText(line, 95, y);
+              context.fillText(line, 240, y); // Start at same x-coordinate as Narrator text
               line = words[i] + ' ';
               y += lineHeight;
             } else {
