@@ -28,6 +28,7 @@ export default function ARDebug2Page() {
   const firstPlacementCompletedRef = useRef(false);
   const planeDetectionLockedRef = useRef(false);
   const micIndicatorRef = useRef(null);
+  const subtitlePersistentRef = useRef(false);
 
   // Scenes with models and scripts
   const scenes = [
@@ -81,6 +82,8 @@ export default function ARDebug2Page() {
     if (!rendererRef.current?.createSubtitleSprite || !micIndicatorRef.current) return;
     
     try {
+      addLog(`📝 Updating subtitle text: "${text.substring(0, 50)}..."`);
+      
       // Remove old subtitle sprite
       if (micIndicatorRef.current) {
         rendererRef.current.scene.remove(micIndicatorRef.current);
@@ -91,7 +94,7 @@ export default function ARDebug2Page() {
       newSubtitle.visible = true; // Always visible when persistent mode is active
       rendererRef.current.scene.add(newSubtitle);
       micIndicatorRef.current = newSubtitle;
-      setSubtitlePersistent(true); // Mark subtitle as persistent
+      subtitlePersistentRef.current = true; // Mark subtitle as persistent using ref
       addLog('✅ Subtitle text updated and made persistent');
     } catch (e) {
       addLog('⚠️ Failed to update subtitle: ' + e.message);
@@ -103,6 +106,22 @@ export default function ARDebug2Page() {
     if (micIndicatorRef.current) {
       micIndicatorRef.current.visible = visible;
       addLog(visible ? '✅ Subtitle shown' : '🚫 Subtitle hidden');
+    }
+  };
+
+  // Lock plane detection after first successful placement
+  const lockPlaneDetection = () => {
+    if (!planeDetectionLockedRef.current) {
+      planeDetectionLockedRef.current = true;
+      addLog('🔒 Plane detection locked after first placement');
+    }
+  };
+
+  // Unlock plane detection (for debugging or reset)
+  const unlockPlaneDetection = () => {
+    if (planeDetectionLockedRef.current) {
+      planeDetectionLockedRef.current = false;
+      addLog('🔓 Plane detection unlocked');
     }
   };
 
@@ -554,6 +573,7 @@ export default function ARDebug2Page() {
 
             // Perform hit test to find surfaces (only if plane detection not locked)
             if (hitTestSourceRef.current && referenceSpace && reticle && !planeDetectionLockedRef.current) {
+              addLog('🔍 Performing hit test (plane detection active)');
               const hitTestResults = frame.getHitTestResults(hitTestSourceRef.current);
               if (hitTestResults.length > 0) {
                 const hit = hitTestResults[0];
@@ -566,20 +586,20 @@ export default function ARDebug2Page() {
                 const scale = 1 + Math.sin(pulseTime) * 0.2;
                 reticle.scale.set(scale, scale, scale);
                 
-                // Status indicator removed - no need to update
-                
                 // Hide scanning text
                 if (textSprites?.scanning) {
                   textSprites.scanning.visible = false;
                 }
                 
-                // Show success message temporarily (first time only)
-                if (!lastSurfaceState && textSprites) {
-                  addLog('✅ Surface detected!');
+                // Show success message temporarily (first time only and only when plane detection not locked)
+                if (!lastSurfaceState && textSprites && !planeDetectionLockedRef.current) {
+                  addLog('✅ Surface detected! (First time this detection cycle)');
                   
-                  // Create and show success text
+                  // Clean up previous success text sprite
                   if (textSprites.success) {
                     rendererRef.current.scene.remove(textSprites.success);
+                    textSprites.success = null;
+                    addLog('🗑️ Cleaned up previous success text sprite');
                   }
                   
                   const successText = rendererRef.current.createTextSprite('SURFACE FOUND!', '#FFFFFF', 'rgba(34, 139, 34, 0.9)');
@@ -588,53 +608,65 @@ export default function ARDebug2Page() {
                   rendererRef.current.scene.add(successText);
                   textSprites.success = successText;
                   
-                  // Don't show subtitle during initial scanning - only after first placement
-                  if (firstPlacementCompletedRef.current) {
+                  // Show subtitle when surface found (only after first placement completed)
+                  if (firstPlacementCompletedRef.current && subtitlePersistentRef.current) {
                     updateSubtitleText('Surface found! Tap the screen to place the model');
                     if (micIndicatorRef.current) {
                       micIndicatorRef.current.visible = true;
                     }
                   }
                   
-                  // Auto-hide after 3 seconds
+                  // Auto-hide after 3 seconds with proper cleanup
                   if (successTimerRef.current) clearTimeout(successTimerRef.current);
                   successTimerRef.current = setTimeout(() => {
                     if (textSprites.success) {
-                      textSprites.success.visible = false;
+                      rendererRef.current.scene.remove(textSprites.success);
+                      textSprites.success = null;
+                      addLog('🗑️ Success text sprite cleaned up after timeout');
                     }
                   }, 3000);
                   
                   lastSurfaceState = true;
+                  
                   // Lock plane detection after first successful placement
                   if (firstPlacementCompletedRef.current && !planeDetectionLockedRef.current) {
-                    planeDetectionLockedRef.current = true;
-                    addLog('🔒 Plane detection locked after first placement');
+                    lockPlaneDetection();
                   }
+                } else if (lastSurfaceState) {
+                  addLog('🔄 Surface still detected (notification already shown)');
                 }
                 
                 setSurfaceFound(true);
               } else {
                 reticle.visible = false;
                 
-                // Status indicator removed - no need to update
-                
                 // Show scanning text only before first successful placement
                 if (textSprites?.scanning && !hasSpokenRef.current) {
                   textSprites.scanning.visible = true;
                 }
                 
-                // Hide success text when surface lost
+                // Hide success text when surface lost with proper cleanup
                 if (textSprites?.success) {
-                  textSprites.success.visible = false;
+                  rendererRef.current.scene.remove(textSprites.success);
+                  textSprites.success = null;
+                  addLog('🗑️ Success text sprite cleaned up (surface lost)');
                 }
                 
                 if (lastSurfaceState) {
                   addLog('⚠️ Surface lost, keep scanning...');
                   // Keep subtitle visible after first successful placement
-                  // Don't hide subtitle during subsequent scanning
+                  if (subtitlePersistentRef.current && micIndicatorRef.current) {
+                    micIndicatorRef.current.visible = true;
+                  }
                   lastSurfaceState = false;
                 }
                 setSurfaceFound(false);
+              }
+            } else if (planeDetectionLockedRef.current) {
+              addLog('🔒 Plane detection locked - skipping hit test');
+              // Ensure reticle is hidden when plane detection is locked
+              if (reticle) {
+                reticle.visible = false;
               }
             }
 
@@ -645,8 +677,8 @@ export default function ARDebug2Page() {
 
             // Position and animate subtitle indicator
             const subtitleIndicator = micIndicatorRef.current;
-            // Keep subtitle visible after first successful placement
-            if (subtitleIndicator && camera && (subtitleIndicator.visible || firstPlacementCompletedRef.current)) {
+            // Keep subtitle visible after first successful placement using persistent ref
+            if (subtitleIndicator && camera && (subtitleIndicator.visible || subtitlePersistentRef.current)) {
               const cameraDirection = new THREE.Vector3();
               camera.getWorldDirection(cameraDirection);
               const subtitlePosition = camera.position.clone();
@@ -655,8 +687,10 @@ export default function ARDebug2Page() {
               subtitleIndicator.position.copy(subtitlePosition);
               subtitleIndicator.lookAt(camera.position);
               
-              // Maintain consistent scale (no pulsing for subtitles)
-              // Scale is already set based on screen size during creation
+              // Ensure subtitle remains visible if persistent
+              if (subtitlePersistentRef.current) {
+                subtitleIndicator.visible = true;
+              }
               
               // More pronounced opacity variation when speaking vs standby
               if (isSpeaking) {
@@ -794,6 +828,11 @@ export default function ARDebug2Page() {
           toggleSubtitleVisibility(true);
         }
         
+        // Lock plane detection after first placement
+        if (isFirstPlacement) {
+          lockPlaneDetection();
+        }
+        
         // Hide confirmation after 2 seconds
         setTimeout(() => setModelPlaced(false), 2000);
         
@@ -875,10 +914,14 @@ export default function ARDebug2Page() {
           successTimerRef.current = null;
         }
         
-        // Hide subtitle when AR session ends
+        // Hide subtitle when AR session ends and reset persistent state
         if (micIndicatorRef.current) {
           micIndicatorRef.current.visible = false;
         }
+        subtitlePersistentRef.current = false;
+        
+        // Unlock plane detection when session ends
+        unlockPlaneDetection();
       });
 
     } catch (error) {
