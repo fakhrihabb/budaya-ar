@@ -11,6 +11,7 @@ export default function ARDebug2Page() {
   const [currentScene, setCurrentScene] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [rendererReady, setRendererReady] = useState(false);
 
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
@@ -573,7 +574,9 @@ export default function ARDebug2Page() {
         addLog('✅ Subtitle indicator created');
 
         rendererRef.current = { THREE, renderer, scene, camera, reticleMaterial, createTextSprite, createSubtitleSprite };
+        setRendererReady(true);
         addLog('✅ Three.js initialized successfully');
+        addLog('🎯 Renderer is now ready for AR session');
 
         let pulseTime = 0;
         let lastSurfaceState = false;
@@ -741,6 +744,8 @@ export default function ARDebug2Page() {
       if (rendererRef.current?.renderer) {
         rendererRef.current.renderer.setAnimationLoop(null);
       }
+      setRendererReady(false);
+      addLog('🔄 Renderer cleanup completed');
     };
   }, []);
 
@@ -758,8 +763,9 @@ export default function ARDebug2Page() {
 
   // Start AR session
   const startAR = async () => {
-    if (!rendererRef.current) {
+    if (!rendererRef.current || !rendererReady) {
       addLog('❌ AR renderer not ready');
+      addLog(`🔍 Renderer state: ref=${!!rendererRef.current}, ready=${rendererReady}`);
       alert('AR renderer not ready - please wait for initialization');
       return;
     }
@@ -1162,14 +1168,16 @@ export default function ARDebug2Page() {
               <div className="rounded-3xl shadow-lg p-12 mb-8 text-center" style={{backgroundColor: 'white', border: '2px solid #D4A373'}}>
                 <button
                   onClick={startAR}
-                  disabled={!arSupported}
+                  disabled={!arSupported || !rendererReady}
                   className="px-12 py-5 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-xl"
                   style={{
-                    backgroundColor: arSupported ? '#473C8B' : '#ccc',
-                    boxShadow: arSupported ? '0 4px 12px rgba(71, 60, 139, 0.3)' : 'none'
+                    backgroundColor: (arSupported && rendererReady) ? '#473C8B' : '#ccc',
+                    boxShadow: (arSupported && rendererReady) ? '0 4px 12px rgba(71, 60, 139, 0.3)' : 'none'
                   }}
                 >
-                  {arSupported ? '🚀 Start AR Experience' : '❌ AR Not Supported'}
+                  {!arSupported ? '❌ AR Not Supported' :
+                   !rendererReady ? '⏳ Initializing...' :
+                   '🚀 Start AR Experience'}
                 </button>
               </div>
 
@@ -1203,6 +1211,13 @@ export default function ARDebug2Page() {
                     <div>
                       <strong>Placement Confirmation</strong><br />
                       <span className="text-sm">Visual feedback when model is placed</span>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-2xl">🎯</span>
+                    <div>
+                      <strong>Enhanced Avatar Positioning</strong><br />
+                      <span className="text-sm">Avatar positioned 15% from left edge with proper vertical centering</span>
                     </div>
                   </li>
                 </ul>
