@@ -42,7 +42,7 @@ export default function ARDebug2Page() {
         {
             model: '/models/rumahgadang.glb',
             script: 'Rumah Gadang adalah rumah adat Minangkabau yang khas dengan atapnya yang melengkung seperti tanduk kerbau.',
-            scale: '0.3 0.3 0.3'
+            scale: '1 1 1'
         },
         {
             model: '/models/crown.glb',
@@ -52,7 +52,7 @@ export default function ARDebug2Page() {
         {
             model: '/models/globe.glb',
             script: 'Setelah kemerdekaan Indonesia, Pacu Jalur menjadi festival rakyat untuk merayakan Hari Kemerdekaan Republik Indonesia.',
-            scale: '0.5 0.5 0.5'
+            scale: '0.6 0.6 0.6'
         }
     ];
 
@@ -129,6 +129,8 @@ export default function ARDebug2Page() {
                 camera-controls
                 auto-rotate
                 shadow-intensity="1"
+                exposure="1"                           // ADD THIS
+                scale={scenes[currentScene].scale}      // ADD THIS
                 style={{ width: '100%', height: '100%' }}
                 ref={modelViewerRef}
                 onLoad={() => addLog('Model loaded')}
@@ -141,15 +143,59 @@ export default function ARDebug2Page() {
                     className="absolute left-0 right-0 flex flex-col items-center gap-4 pointer-events-none"
                     style={{ bottom: '200px' }}
                 >
-                    {/* UI Overlay */}
-                    <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl max-w-md mx-4 pointer-events-auto text-center">
-                        <p className="text-lg text-gray-800 mb-4">{scenes[currentScene].script}</p>
-                        <button
-                            onClick={handleNextModel}
-                            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg"
+                    {/* HUD-style Subtitle Container */}
+                    <div
+                        className="bg-black/40 backdrop-blur-xl p-4 rounded-2xl shadow-2xl max-w-md mx-4 pointer-events-auto flex items-center gap-4 border border-white/10 animate-fade-in-once"
+                        style={{
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                            background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(30, 30, 40, 0.4) 100%)',
+                        }}
+                    >
+                        {/* Avatar with glowing border */}
+                        <div
+                            className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0"
+                            style={{
+                                boxShadow: '0 0 20px rgba(100, 200, 255, 0.6), 0 0 40px rgba(100, 200, 255, 0.3)',
+                                border: '2px solid rgba(100, 200, 255, 0.8)',
+                            }}
                         >
-                            NEXT MODEL
-                        </button>
+                            <img
+                                src="/apple-touch-icon.png"
+                                alt="Avatar"
+                                className="w-full h-full object-cover"
+                            />
+                            {/* Glowing ring effect */}
+                            <div
+                                className="absolute inset-0 rounded-full pointer-events-none"
+                                style={{
+                                    background: 'radial-gradient(circle at 30% 30%, rgba(100, 200, 255, 0.8) 0%, transparent 70%)',
+                                    filter: 'blur(2px)',
+                                    mixBlendMode: 'screen',
+                                }}
+                            />
+                        </div>
+                        
+                        {/* Subtitle text and button container */}
+                        <div className="flex-1">
+                            <p
+                                className="text-white text-base font-medium leading-relaxed mb-3"
+                                style={{
+                                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+                                    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                                }}
+                            >
+                                {scenes[currentScene].script}
+                            </p>
+                            <button
+                                onClick={handleNextModel}
+                                className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-5 py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm"
+                                style={{
+                                    boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4), 0 0 20px rgba(6, 182, 212, 0.2)',
+                                }}
+                            >
+                                NEXT MODEL
+                            </button>
+                        </div>
                     </div>
                 </div>
             </model-viewer>
