@@ -371,9 +371,9 @@ export default function ARDebug2Page() {
               setTimeout(reject, 2000); // Timeout after 2s
             });
             
-            // Draw circular avatar on the left
+            // Draw circular avatar on the left - positioned to overlap subtitle border
             const avatarSize = 180; // Moderately larger size for mobile visibility
-            const avatarX = 140; // Adjusted position for larger canvas
+            const avatarX = 100; // Moved further left to overlap subtitle box left border
             const avatarY = canvas.height / 2;
             
             context.save();
@@ -408,7 +408,7 @@ export default function ARDebug2Page() {
           context.font = 'Bold 60px Arial'; // Dramatically larger font for mobile visibility
           context.textAlign = 'left';
           context.textBaseline = 'top';
-          context.fillText('Narrator', 280, 60);
+          context.fillText('Narrator', 240, 60);
           
           // Draw subtitle text (word-wrapped)
           context.fillStyle = '#FFFFFF';
@@ -416,7 +416,7 @@ export default function ARDebug2Page() {
           context.textAlign = 'left';
           context.textBaseline = 'top';
           
-          const maxWidth = canvas.width - 400; // Adjusted text area for larger canvas
+          const maxWidth = canvas.width - 360; // Adjusted text area for moved avatar
           const lineHeight = 72; // Dramatically larger line height for better readability
           const words = text.split(' ');
           let line = '';
@@ -426,7 +426,7 @@ export default function ARDebug2Page() {
             const testLine = line + words[i] + ' ';
             const metrics = context.measureText(testLine);
             if (metrics.width > maxWidth && i > 0) {
-              context.fillText(line, 135, y);
+              context.fillText(line, 95, y);
               line = words[i] + ' ';
               y += lineHeight;
             } else {
