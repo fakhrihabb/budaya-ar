@@ -10,8 +10,6 @@ export default function ARDebug2Page() {
   const [isScanning, setIsScanning] = useState(false);
   const [currentScene, setCurrentScene] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [subtitleText, setSubtitleText] = useState('');
-  const [currentNarrationText, setCurrentNarrationText] = useState('');
   const [logs, setLogs] = useState([]);
 
   const canvasRef = useRef(null);
@@ -76,10 +74,25 @@ export default function ARDebug2Page() {
     console.log(logMsg);
   };
 
-  // Update subtitle text dynamically (now DOM-based)
+  // Update subtitle text dynamically
   const updateSubtitleText = async (text) => {
-    setSubtitleText(text);
-    addLog('✅ Subtitle text updated in DOM overlay');
+    if (!rendererRef.current?.createSubtitleSprite || !micIndicatorRef.current) return;
+    
+    try {
+      // Remove old subtitle sprite
+      if (micIndicatorRef.current) {
+        rendererRef.current.scene.remove(micIndicatorRef.current);
+      }
+      
+      // Create new subtitle with updated text
+      const newSubtitle = await rendererRef.current.createSubtitleSprite(text);
+      newSubtitle.visible = micIndicatorRef.current.visible; // Maintain previous visibility state
+      rendererRef.current.scene.add(newSubtitle);
+      micIndicatorRef.current = newSubtitle;
+      addLog('✅ Subtitle text updated');
+    } catch (e) {
+      addLog('⚠️ Failed to update subtitle: ' + e.message);
+    }
   };
 
   // Text-to-speech function with auto scene advance
@@ -104,7 +117,6 @@ export default function ARDebug2Page() {
       addLog(`✅ Speech started for scene ${sceneIndex + 1}`);
       
       // Update subtitle text with current scene script
-      setCurrentNarrationText(text);
       updateSubtitleText(text);
     };
 
@@ -500,9 +512,12 @@ export default function ARDebug2Page() {
         textSpriteRef.current = { scanning: scanningText, createTextSprite };
         addLog('✅ Text sprites created');
 
-        // 3D subtitle removed - now using DOM overlay instead
-        micIndicatorRef.current = { visible: false }; // Dummy object for compatibility
-        addLog('✅ Subtitle indicator disabled (using DOM overlay)');
+        // Create subtitle indicator sprite (game-style with avatar)
+        const subtitleIndicator = await createSubtitleSprite('Ready to start the AR experience...');
+        subtitleIndicator.visible = false; // Hidden by default, only show when surface found or model placed
+        scene.add(subtitleIndicator);
+        micIndicatorRef.current = subtitleIndicator;
+        addLog('✅ Subtitle indicator created');
 
         rendererRef.current = { THREE, renderer, scene, camera, reticleMaterial, createTextSprite, createSubtitleSprite };
         addLog('✅ Three.js initialized successfully');
@@ -565,6 +580,9 @@ export default function ARDebug2Page() {
                   
                   // Show subtitle when surface is found
                   updateSubtitleText('Surface found! Tap the screen to place the model');
+                  if (micIndicatorRef.current) {
+                    micIndicatorRef.current.visible = true;
+                  }
                   
                   // Auto-hide after 3 seconds
                   if (successTimerRef.current) clearTimeout(successTimerRef.current);
@@ -595,7 +613,10 @@ export default function ARDebug2Page() {
                 
                 if (lastSurfaceState) {
                   addLog('⚠️ Surface lost, keep scanning...');
-                  // Hide subtitle when surface is lost (handled by DOM overlay visibility)
+                  // Hide subtitle when surface is lost
+                  if (micIndicatorRef.current) {
+                    micIndicatorRef.current.visible = false;
+                  }
                   lastSurfaceState = false;
                 }
                 setSurfaceFound(false);
@@ -607,10 +628,28 @@ export default function ARDebug2Page() {
               placedModelRef.current.rotation.y += 0.01;
             }
 
-            // Subtitle is now handled by DOM overlay, no need for 3D positioning
+            // Position and animate subtitle indicator
             const subtitleIndicator = micIndicatorRef.current;
             if (subtitleIndicator && camera && subtitleIndicator.visible) {
-              // No 3D positioning needed - subtitle is now in DOM overlay
+              const cameraDirection = new THREE.Vector3();
+              camera.getWorldDirection(cameraDirection);
+              const subtitlePosition = camera.position.clone();
+              subtitlePosition.add(cameraDirection.multiplyScalar(0.9)); // 0.9m in front
+              subtitlePosition.y -= 0.35; // Bottom of view (subtitle position)
+              subtitleIndicator.position.copy(subtitlePosition);
+              subtitleIndicator.lookAt(camera.position);
+              
+              // Maintain consistent scale (no pulsing for subtitles)
+              // Scale is already set based on screen size during creation
+              
+              // More pronounced opacity variation when speaking vs standby
+              if (isSpeaking) {
+                // Active speaking - higher opacity
+                subtitleIndicator.material.opacity = 0.95 + Math.sin(timestamp * 0.004) * 0.03;
+              } else {
+                // Standby mode - lower opacity but still visible
+                subtitleIndicator.material.opacity = 0.75 + Math.sin(timestamp * 0.002) * 0.05;
+              }
             }
           }
 
@@ -633,7 +672,7 @@ export default function ARDebug2Page() {
 
   // Sync mic indicator with isSpeaking state
   useEffect(() => {
-    if (micIndicatorRef.current) {
+    if (micIndicatorRef.current && micIndicatorRef.current.visible) {
       // Only update content if subtitle is visible
       if (isSpeaking) {
         addLog('💬 Subtitle active');
@@ -736,6 +775,9 @@ export default function ARDebug2Page() {
         } else {
           updateSubtitleText(`${sceneName} placed! You can place again to replace it.`);
         }
+        if (micIndicatorRef.current) {
+          micIndicatorRef.current.visible = true;
+        }
         
         // Hide confirmation after 2 seconds
         setTimeout(() => setModelPlaced(false), 2000);
@@ -817,7 +859,10 @@ export default function ARDebug2Page() {
           successTimerRef.current = null;
         }
         
-        // Hide subtitle when AR session ends (handled by DOM overlay visibility)
+        // Hide subtitle when AR session ends
+        if (micIndicatorRef.current) {
+          micIndicatorRef.current.visible = false;
+        }
       });
 
     } catch (error) {
@@ -919,51 +964,6 @@ export default function ARDebug2Page() {
               </>
             )}
           </div>
-
-          {/* Subtitle overlay - DOM-based subtitle */}
-          {(surfaceFound || modelPlaced) && (
-            <div style={{
-              position: 'fixed',
-              bottom: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              color: 'white',
-              padding: '15px 25px',
-              borderRadius: '15px',
-              maxWidth: '90%',
-              textAlign: 'center',
-              fontSize: '16px',
-              fontWeight: '600',
-              zIndex: 9998,
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              <img
-                src="/2.svg"
-                alt="Narrator"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  border: '2px solid white'
-                }}
-              />
-              <div>
-                <div style={{ fontSize: '14px', color: '#FFC857', marginBottom: '4px' }}>
-                  Narrator {isSpeaking && '🔊'}
-                </div>
-                <div>
-                  {isSpeaking && currentNarrationText ? currentNarrationText :
-                   subtitleText || (surfaceFound && !modelPlaced ? 'Surface found! Tap the screen to place the model' : 'Model placed! Starting narration...')}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Model placed indicator */}
           {modelPlaced && (
