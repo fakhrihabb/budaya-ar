@@ -26,6 +26,7 @@ export default function ARDebug2Page() {
   const currentSceneRef = useRef(0);
   const hasSpokenRef = useRef(false);
   const firstPlacementCompletedRef = useRef(false);
+  const planeDetectionLockedRef = useRef(false);
   const micIndicatorRef = useRef(null);
 
   // Scenes with models and scripts
@@ -551,8 +552,8 @@ export default function ARDebug2Page() {
               textSprites.scanning.position.copy(textPosition);
             }
 
-            // Perform hit test to find surfaces
-            if (hitTestSourceRef.current && referenceSpace && reticle) {
+            // Perform hit test to find surfaces (only if plane detection not locked)
+            if (hitTestSourceRef.current && referenceSpace && reticle && !planeDetectionLockedRef.current) {
               const hitTestResults = frame.getHitTestResults(hitTestSourceRef.current);
               if (hitTestResults.length > 0) {
                 const hit = hitTestResults[0];
@@ -604,6 +605,11 @@ export default function ARDebug2Page() {
                   }, 3000);
                   
                   lastSurfaceState = true;
+                  // Lock plane detection after first successful placement
+                  if (firstPlacementCompletedRef.current && !planeDetectionLockedRef.current) {
+                    planeDetectionLockedRef.current = true;
+                    addLog('🔒 Plane detection locked after first placement');
+                  }
                 }
                 
                 setSurfaceFound(true);
