@@ -29,6 +29,7 @@ export default function ARDebug2Page() {
   const planeDetectionLockedRef = useRef(false);
   const micIndicatorRef = useRef(null);
   const subtitlePersistentRef = useRef(false);
+  const nextButtonRef = useRef(null);
 
   // Scenes with models and scripts
   const scenes = [
@@ -291,6 +292,46 @@ export default function ARDebug2Page() {
     }
     
     await nextScene();
+  };
+
+  // Create 3D UI button for next model
+  const createNextButton = () => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 128;
+    
+    // Draw button background
+    context.fillStyle = '#28A745';
+    context.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 12);
+    context.fill();
+    
+    // Draw border
+    context.strokeStyle = '#FFFFFF';
+    context.lineWidth = 3;
+    context.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 12);
+    context.stroke();
+    
+    // Draw text
+    context.fillStyle = '#FFFFFF';
+    context.font = 'Bold 24px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText('NEXT MODEL', canvas.width / 2, canvas.height / 2);
+    
+    const THREE = window.THREE || require('three');
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      opacity: 0.9,
+      depthTest: false,
+      depthWrite: false
+    });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(0.3, 0.15, 1);
+    
+    return sprite;
   };
 
   // Check WebXR support
@@ -592,6 +633,13 @@ export default function ARDebug2Page() {
         micIndicatorRef.current = subtitleIndicator;
         addLog('✅ Subtitle indicator created');
 
+        // Create Next Model button
+        const nextButton = createNextButton();
+        nextButton.visible = false; // Hidden by default, show when model placed
+        scene.add(nextButton);
+        nextButtonRef.current = nextButton;
+        addLog('✅ Next Model button created');
+
         rendererRef.current = { THREE, renderer, scene, camera, reticleMaterial, createTextSprite, createSubtitleSprite };
         addLog('✅ Three.js initialized successfully');
 
@@ -745,6 +793,26 @@ export default function ARDebug2Page() {
                 subtitleIndicator.material.opacity = 0.75 + Math.sin(timestamp * 0.002) * 0.05;
               }
             }
+
+            // Position Next Model button
+            const nextButton = nextButtonRef.current;
+            if (nextButton && camera && placedModelRef.current) {
+              const cameraDirection = new THREE.Vector3();
+              camera.getWorldDirection(cameraDirection);
+              const buttonPosition = camera.position.clone();
+              buttonPosition.add(cameraDirection.multiplyScalar(0.8)); // 0.8m in front
+              buttonPosition.y += 0.2; // Slightly above center
+              buttonPosition.x -= 0.3; // Move to right side of view
+              nextButton.position.copy(buttonPosition);
+              nextButton.lookAt(camera.position);
+              nextButton.visible = true;
+              
+              // Subtle pulsing animation
+              const pulse = 1 + Math.sin(timestamp * 0.003) * 0.05;
+              nextButton.scale.set(0.3 * pulse, 0.15 * pulse, 1);
+            } else if (nextButton) {
+              nextButton.visible = false;
+            }
           }
 
           renderer.render(scene, camera);
@@ -830,7 +898,7 @@ export default function ARDebug2Page() {
 
       // Set up tap-to-place
       const controller = rendererRef.current.renderer.xr.getController(0);
-      controller.addEventListener('select', () => {
+      controller.addEventListener('select', async () => {
         addLog('👆 Screen tapped!');
         const reticle = reticleRef.current;
         const model = rendererRef.current.loadedModel;
@@ -843,6 +911,20 @@ export default function ARDebug2Page() {
         if (!model) {
           addLog('⚠️ Model not loaded yet');
           return;
+        }
+        
+        // Check if Next Model button was clicked (during AR session)
+        if (placedModelRef.current && nextButtonRef.current) {
+          const raycaster = new THREE.Raycaster();
+          const camera = rendererRef.current.camera;
+          raycaster.setFromCamera(new THREE.Vector2(0, 0), camera); // Center of screen
+          const intersects = raycaster.intersectObject(nextButtonRef.current);
+          
+          if (intersects.length > 0) {
+            addLog('🎯 Next Model button clicked in AR!');
+            await handleNextModel();
+            return; // Don't place model if button was clicked
+          }
         }
         
         // Check if this is first placement
@@ -888,8 +970,33 @@ export default function ARDebug2Page() {
           speakText(scenes[currentSceneRef.current].script, currentSceneRef.current);
         }
       });
+
+      // Add Next Model button click handler
+      const handleNextButtonClick = async (event) => {
+        // Convert screen coordinates to 3D ray
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+        
+        // Check if Next Model button was clicked
+        const intersects = raycaster.intersectObject(nextButtonRef.current);
+        if (intersects.length > 0) {
+          addLog('🎯 Next Model button clicked!');
+          await handleNextModel();
+        }
+      };
+
+      // Add click event listener for Next Model button (only when not in XR session)
+      if (!renderer.xr.isPresenting) {
+        canvasRef.current.addEventListener('click', handleNextButtonClick);
+      }
+      
       rendererRef.current.scene.add(controller);
       addLog('✅ Tap-to-place controller ready');
+      addLog('✅ Next Model button interaction ready');
       
       // 3D status indicator removed - skipping activation
       addLog('ℹ️ 3D status indicator disabled');
@@ -937,6 +1044,11 @@ export default function ARDebug2Page() {
         if (placedModelRef.current) {
           rendererRef.current.scene.remove(placedModelRef.current);
           placedModelRef.current = null;
+        }
+        
+        if (nextButtonRef.current) {
+          rendererRef.current.scene.remove(nextButtonRef.current);
+          nextButtonRef.current = null;
         }
         
         if (reticleRef.current) {
