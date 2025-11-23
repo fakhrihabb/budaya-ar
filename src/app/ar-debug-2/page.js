@@ -990,7 +990,7 @@ export default function ARDebug2Page() {
       };
 
       // Add click event listener for Next Model button (only when not in XR session)
-      if (!renderer.xr.isPresenting) {
+      if (!rendererRef.current.renderer.xr.isPresenting) {
         canvasRef.current.addEventListener('click', handleNextButtonClick);
       }
       
@@ -1416,3 +1416,4 @@ export default function ARDebug2Page() {
     </div>
   );
 }
+
